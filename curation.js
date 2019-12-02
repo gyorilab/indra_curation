@@ -122,6 +122,32 @@ Vue.component('curation-row', {
                     headers: {'Content-Type': 'application/json'}
                     });
             console.log('Response Status: ' + resp.status);
+            switch (resp.status) {
+                case 200:
+                    this.submitting = false;
+                    this.message = "Curation successful!";
+                    this.clear();
+                    this.icon.style = "color: #00FF00";
+                    break;
+                case 400:
+                    this.message = resp.status + ": Bad Curation Data";
+                    this.icon.style = "color: #FF0000";
+                    break;
+                case 500:
+                    this.message = resp.status + ": Internal Server Error";
+                    this.icon.style = "color: #FF0000";
+                    break;
+                case 504:
+                    this.message = resp.status + ": Server Timeout";
+                    this.icon.style = "color: 58D3F7";
+                    break;
+                default:
+                    console.log("Unexpected error");
+                    console.log(resp);
+                    this.message = resp.status + ': Uncaught error';
+                    this.icon.style = "color: #FF8000";
+                    break;
+            }
 
             const data = await resp.json();
             console.log('Got back: ' + JSON.stringify(data));
