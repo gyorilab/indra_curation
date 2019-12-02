@@ -1,4 +1,3 @@
-
 Vue.component('curation-row', {
     template: `
         <div class='row cchild' style='border-top: 1px solid #FFFFFF;'>
@@ -41,8 +40,10 @@ Vue.component('curation-row', {
                         vertical-align: middle;'>
               <a class='submission_status'></a>
             </div>
-            <div v-if='is_on'>
-              error_type: {{ error_type }}<br>
+            <div v-if='error_type'>
+              error_type: {{ error_type }}
+            </div>
+            <div v-if='comment'>
               comment: {{ comment }}
             </div>
           </div>
@@ -97,14 +98,15 @@ Vue.component('curation-row', {
         submitCuration: async function(cur_dict) {
             cur_dict.error_type = this.error_type;
             cur_dict.comment = this.comment;
-            console.log(cur_dict);
+            console.log('Sending: ' + JSON.stringify(cur_dict));
             const resp = await fetch('http://127.0.0.1:5000/curate', {
                     method: 'POST',
                     body: JSON.stringify(cur_dict),
                     headers: {'Content-Type': 'application/json'}
                     });
+            console.log('Response Status: ' + resp.status);
             const data = await resp.json();
-            console.log(data);
+            console.log('Got back: ' + JSON.stringify(data));
         }
     }
 })
