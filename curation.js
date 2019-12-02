@@ -40,11 +40,12 @@ Vue.component('curation-row', {
                         vertical-align: middle;'>
               <a class='submission_status'></a>
             </div>
-            <div v-if='error_type'>
-              error_type: {{ error_type }}
-            </div>
-            <div v-if='comment'>
+            <div v-if='data_entered'>
+              error_type: {{ error_type }}<br>
               comment: {{ comment }}
+            </div>
+            <div v-if='message'>
+              message: {{ message }}
             </div>
           </div>
         </div>`,
@@ -67,13 +68,24 @@ Vue.component('curation-row', {
                 mod_site: 'Modification Site',
                 other: 'Other...'
             },
-            submitting: false
+            submitting: false,
+            message: ""
         }
+    },
+    computed: {
+        data_entered: function () {
+            return Boolean(this.comment) || Boolean(this.error_type);
+        }
+    },
+    mounted: function () {
+        this.pmid_row = this.$el.parentElement;
+        this.icon = this.pmid_row.getElementsByClassName('curation_toggle')[0];
+        this.source_hash = this.pmid_row.dataset.source_hash;
+        this.stmt_hash = this.pmid_row.parentElement.dataset.stmt_hash;
     },
     methods: {
         submitForm: function() {
             this.submitting = true;
-            let pmid_row = this.$el.parentElement;
             console.log('Submitting Curation:');
             console.log('Comment: ' + this.comment);
             console.log('Error Type: ' + this.error_type);
@@ -87,17 +99,22 @@ Vue.component('curation-row', {
                 return;
             }
 
-            let icon = pmid_row.getElementsByClassName('curation_toggle')[0];
-            let source_hash = pmid_row.dataset.source_hash;
-            let stmt_hash = pmid_row.parentElement.dataset.stmt_hash;
-
-            this.submitCuration({ev_hash: source_hash, stmt_hash: stmt_hash});
+            this.submitCuration();
             this.submitting = false;
         },
 
-        submitCuration: async function(cur_dict) {
-            cur_dict.error_type = this.error_type;
-            cur_dict.comment = this.comment;
+        clear: function () {
+            this.error_type = "";
+            this.comment = "";
+        },
+
+        submitCuration: async function() {
+            let cur_dict = {
+                error_type: this.error_type,
+                comment: this.comment,
+                source_hash: this.source_hash,
+                stmt_hash: this.stmt_hash
+            }
             console.log('Sending: ' + JSON.stringify(cur_dict));
             const resp = await fetch('http://127.0.0.1:5000/curate', {
                     method: 'POST',
@@ -105,6 +122,7 @@ Vue.component('curation-row', {
                     headers: {'Content-Type': 'application/json'}
                     });
             console.log('Response Status: ' + resp.status);
+
             const data = await resp.json();
             console.log('Got back: ' + JSON.stringify(data));
         }
