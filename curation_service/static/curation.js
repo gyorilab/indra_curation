@@ -76,6 +76,16 @@ Vue.component('curation-row', {
                     v-on:click='submitForm'>Submit
                 </button>
             </div>
+            <div class='curation_button'
+                 style='display:inline-block; 
+                        vertical-align: middle;'>
+                <button
+                    type='button'
+                    class='btn btn-default btn-submit pull-right'
+                    style='padding: 2px 6px'
+                    v-on:click='loadPriors'>Load Priors
+                </button>
+            </div>
             <div class='submission_status'
                  style='display:inline-block; 
                         vertical-align: middle;'>
@@ -87,6 +97,15 @@ Vue.component('curation-row', {
             </div>
             <div v-if='message'>
               message: {{ message }}
+            </div>
+            <div v-if='priors'>
+              <div v-for='entry in priors'>
+                 error_type: {{ entry.value.tag }}<br>
+                 source_api: {{ entry.value.source }}<br>
+                 date: {{ entry.value.date }}<br>
+                 email: {{ entry.value.email }}<br>
+                 text: {{ entry.value.text }}<br>
+              </div>
             </div>
           </div>
         </div>`,
@@ -111,10 +130,7 @@ Vue.component('curation-row', {
             },
             submitting: false,
             message: "",
-            pmid_row = null,
-            icon = null,
-            source_hash = '',
-            stmt_hash = ''
+            priors: null,
         }
     },
     computed: {
@@ -130,10 +146,11 @@ Vue.component('curation-row', {
         }
     },
     mounted: function () {
-        this.pmid_row = this.$el.parentElement;
+        this.stmt_row = this.$el.parentElement;
+        this.pmid_row = this.stmt_row.children[parseInt(this.$attrs.id.split('-')[4])*2]
         this.icon = this.pmid_row.getElementsByClassName('curation_toggle')[0];
         this.source_hash = this.pmid_row.dataset.source_hash;
-        this.stmt_hash = this.pmid_row.parentElement.dataset.stmt_hash;
+        this.stmt_hash = this.stmt_row.dataset.stmt_hash;
     },
     methods: {
         submitForm: function() {
@@ -155,6 +172,13 @@ Vue.component('curation-row', {
             this.submitting = false;
         },
 
+        loadPriors: function() {
+            console.log("Loading prior curations.");
+
+            data = this.getCurations();
+            this.priors = data;
+        },
+
         clear: function () {
             this.error_type = "";
             this.comment = "";
@@ -166,9 +190,9 @@ Vue.component('curation-row', {
                 comment: this.comment,
                 source_hash: this.source_hash,
                 stmt_hash: this.stmt_hash
-            }
+            };
             console.log('Sending: ' + JSON.stringify(cur_dict));
-            const resp = await fetch('http://127.0.0.1:5000/curate', {
+            const resp = await fetch(CURATION_ADDR, {
                     method: 'POST',
                     body: JSON.stringify(cur_dict),
                     headers: {'Content-Type': 'application/json'}
@@ -180,6 +204,7 @@ Vue.component('curation-row', {
                     this.message = "Curation successful!";
                     this.clear();
                     this.icon.style = "color: #00FF00";
+                    this.priors = this.prios
                     break;
                 case 400:
                     this.message = resp.status + ": Bad Curation Data";
@@ -199,11 +224,21 @@ Vue.component('curation-row', {
                     this.message = resp.status + ': Uncaught error';
                     this.icon.style = "color: #FF8000";
                     break;
-            }
+            };
 
             const data = await resp.json();
             console.log('Got back: ' + JSON.stringify(data));
-        }
+        },
+
+        getCurations: async function() {
+            const resp = await fetch(`${LIST_ADDR}/${this.stmt_hash}/${this.source_hash}`, {
+                    method: 'GET',
+                 });
+            console.log('Response Status: ' + resp.status);
+            const data = await resp.json();
+            console.log('Got back: ' + JSON.stringify(data));
+            return data;
+        },
     }
 })
 

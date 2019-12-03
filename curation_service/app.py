@@ -65,7 +65,7 @@ def load(load_file):
     return content
 
 
-@app.route('/curate', methods=['POST'])
+@app.route('/curations/submit', methods=['POST'])
 def submit_curation_to_db():
     # Unpack the request.
     hash_val = request.json.get('stmt_hash')
@@ -99,7 +99,7 @@ def submit_curation_to_db():
     return jsonify(res)
 
 
-@app.route('/curations/<stmt_hash>/<ev_hash>', methods=['GET'])
+@app.route('/curations/load/<stmt_hash>/<ev_hash>', methods=['GET'])
 def get_curation(stmt_hash, ev_hash):
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
@@ -112,10 +112,11 @@ def get_curation_list():
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
         update_curations()
-    return jsonify(CURATIONS['cache'])
+    return jsonify([{'key': k, 'value': v}
+                    for k, v in CURATIONS['cache'].items()])
 
 
-@app.route('/curations/update', methods=['POST'])
+@app.route('/curations/update_cache', methods=['POST'])
 def update_curations_endpoint():
     update_curations()
 

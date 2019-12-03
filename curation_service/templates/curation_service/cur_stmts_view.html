@@ -6,6 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
         let CURATION_ADDR = "{{ url_for('submit_curation_to_db') }}";
+        let LIST_ADDR = "{{ url_for('get_curation', ev_hash='', stmt_hash='') }}";
     </script>
 {% endblock %}
 
