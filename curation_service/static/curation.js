@@ -41,7 +41,7 @@ document.querySelectorAll('.curation_toggle')
 
 Vue.component('curation-row', {
     template: `
-        <div class='row cchild' style='border-top: 1px solid #FFFFFF;'>
+        <div v-if='display' class='row cchild' style='border-top: 1px solid #FFFFFF;'>
           <div class='col' style='padding: 0px; border-top: 1px solid #FFFFFF;'>
             <select v-model='error_type'>
                 <option value='' selected disabled hidden>Select error type...</option>
@@ -116,6 +116,13 @@ Vue.component('curation-row', {
     computed: {
         data_entered: function () {
             return Boolean(this.comment) || Boolean(this.error_type);
+        },
+
+        display: function () {
+            if (this.icon)
+                return this.icon.dataset.show == 'true';
+            else
+                return true;
         }
     },
     mounted: function () {
