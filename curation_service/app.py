@@ -1,15 +1,17 @@
 import pickle
 import argparse
 from os import path
+from datetime import datetime
 
 from flask import Flask, request, jsonify, url_for, abort, Response
-from indra_db.client import submit_curation
-from indra_db.exceptions import BadHashError
-
 from jinja2 import Environment, ChoiceLoader
 
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import loader as indra_loader
+
+from indra_db import get_db
+from indra_db.client import submit_curation
+from indra_db.exceptions import BadHashError
 
 
 app = Flask(__name__)
@@ -85,7 +87,8 @@ def submit_curation_to_db():
     # Add the curation to the cache
     key = (hash_val, ev_hash)
     entry = dict(request.json)
-    entry.update(id=dbid, tag=tag, ip=ip, email=CURATOR_EMAIL)
+    entry.update(id=dbid, tag=tag, ip=ip, email=CURATOR_EMAIL,
+                 source=source_api, date=datetime.now())
     if key not in CURATIONS['cache']:
         CURATIONS['cache'][key] = []
     CURATIONS['cache'][key].append(entry)
@@ -97,8 +100,16 @@ def submit_curation_to_db():
 
 
 @app.route('/curations/<stmt_hash>/<ev_hash>', methods=['GET'])
-def get_curations(stmt_hash, ev_hash):
+def get_curation(stmt_hash, ev_hash):
+    time_since_update = datetime.now() - CURATIONS['last_updated']
+    if time_since_update.total_seconds() > 3600:  # one hour
+        update_curations()
     return jsonify(CURATIONS['cache'][(stmt_hash, ev_hash)])
+
+
+@app.route('/curations/update', methods=['POST'])
+def update_curations_endpoint():
+    update_curations()
 
 
 def get_parser():
@@ -116,11 +127,40 @@ def get_parser():
     return parser
 
 
+def update_curations():
+    CURATIONS['cache'] = {}
+
+    attr_maps = ['tag', 'text', ('curator', 'email'), 'source', 'ip', 'date',
+                 'id', ('pa_hash', 'stmt_hash'), ('source_hash', 'ev_hash')]
+
+    # Build up the curation dict.
+    db = get_db('primary')
+    curations = db.select_all(db.Curations)
+    for curation in curations:
+        key = (curation.pa_hash, curation.source_hash)
+        if key not in CURATIONS['cache']:
+            CURATIONS['cache'][key] = []
+
+        cur_dict = {}
+        for attr_map in attr_maps:
+            if isinstance(attr_map, tuple):
+                db_attr, dict_key = attr_map
+                cur_dict[dict_key] = getattr(curation, db_attr)
+            else:
+                cur_dict[attr_map] = getattr(curation, attr_map)
+        CURATIONS['cache'][key].append(cur_dict)
+
+    CURATIONS['last_updated'] = datetime.now()
+    return
+
+
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     WORKING_DIR = path.abspath(args.working_dir)
     CURATION_TAG = args.tag
     CURATOR_EMAIL = args.email
+
+    update_curations()
 
     app.run()
