@@ -26,8 +26,11 @@ WORKING_DIR = None
 
 @app.route('/show/<load_file>', methods=['GET'])
 def load(load_file):
+    # Get the full path to the file.
     load_file = path.join(WORKING_DIR, load_file)
     print(f"Attempting to load {load_file}")
+
+    # Load or generate the HTML file (as needed)
     if path.exists(load_file + '.html'):
         load_file += '.html'
         print("Using existing html file.")

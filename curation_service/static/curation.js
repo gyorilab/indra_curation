@@ -1,3 +1,44 @@
+function addCurationRow(clickedRow) {
+    // Create the row
+    let curationRow = document.createElement('curation-row');
+    curationRow.id = clickedRow.id + '-cur';
+
+    // Add the row to the evidence row
+    clickedRow.parentNode.insertBefore(curationRow, clickedRow.nextSibling);
+
+    return curationRow.id;
+}
+
+
+function slideToggle(id) {
+    const el = document.querySelector(`#${id}`);
+    if(!el.dataset.open_height) {
+        el.dataset.open_height = el.offsetHeight;
+    }
+    if (el.dataset.open === "true") {
+        el.dataset.open = "false";
+        el.style.height = '0px';
+    }
+    else {
+        el.dataset.open = "true";
+        el.style.height = el.dataset.open_height + 'px';
+    }
+}
+
+
+// Turn on all the toggle buttons.
+document.querySelectorAll('.curation_toggle')
+   .forEach(function(toggle) {
+       const clickedRow = document.querySelector(`#${toggle.dataset.parent_id}`);
+       const cur_id = addCurationRow(clickedRow);
+       toggle.onclick = () => {
+           slideToggle(cur_id);
+       };
+       toggle.innerHTML = "&#9998;";
+       toggle.style.display = 'inline-block';
+   })
+
+
 Vue.component('curation-row', {
     template: `
         <div class='row cchild' style='border-top: 1px solid #FFFFFF;'>
@@ -156,35 +197,4 @@ Vue.component('curation-row', {
 })
 
 var app = new Vue({el:'#curation-app'})
-
-
-// Turn on all the toggle buttons and connect them to a funciton.
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Turn on all the toggle buttons.
-   document.querySelectorAll('.curation_toggle')
-       .forEach(function(toggle) {
-           toggle.onclick = () => {
-               const clickedRow = document.querySelector(`#${this.dataset.parent_id}`);
-               const cur_id = addCurationRow(clickedRow);
-               this.onclick = () => {
-                   slideToggle(cur_id);
-               };
-           };
-           toggle.innerHTML = "&#9998;";
-           toggle.style.display = 'inline-block';
-       })
-});
-
-
-function addCurationRow(clickedRow) {
-    // Create the row
-    let curationRow = document.createElement('curation-row');
-    curationRow.id = clickedRow.id + '-cur';
-
-    // Add the row to the evidence row
-    clickedRow.parentNode.insertBefore(curationRow, clickedRow.nextSibling);
-
-    return curationRow.id;
-}
 
