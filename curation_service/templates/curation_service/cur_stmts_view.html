@@ -5,7 +5,7 @@
     <!-- development version, includes helpful console warnings -->
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
-        let CURATION_ADDR = "{{ url_for('submit_curation', hash_val='') }}";
+        let CURATION_ADDR = "{{ url_for('submit_curation') }}";
     </script>
 {% endblock %}
 
@@ -13,5 +13,5 @@
     {{ super() }}
 
     <!-- Include the curation app -->
-    <script src="curation.js"></script>
+    <script src="{{  url_for('static', filename='curation.js') }}"></script>
 {%  endblock %}
