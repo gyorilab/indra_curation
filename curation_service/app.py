@@ -22,7 +22,7 @@ env = Environment(loader=ChoiceLoader([app.jinja_loader, indra_loader]))
 env.globals.update(url_for=url_for)
 
 
-CURATIONS = []
+CURATIONS = {'last_updated': None, 'cache': {}}
 WORKING_DIR = None
 CURATION_TAG = None
 CURATOR_EMAIL = None
@@ -65,29 +65,40 @@ def load(load_file):
 
 @app.route('/curate', methods=['POST'])
 def submit_curation_to_db():
+    # Unpack the request.
     hash_val = request.json.get('stmt_hash')
-    print("Adding curation for statement %s." % hash_val)
     ev_hash = request.json.get('ev_hash')
-    source_api = request.json.pop('source', 'INDRA CURATION')
+    text = request.json.get('text')
+    print(f"Adding curation for stmt={hash_val} and ev={ev_hash}")
+
+    # Add a new entry to the database.
+    source_api = 'INDRA CURATION'
     tag = CURATION_TAG
     ip = request.remote_addr
-    text = request.json.get('text')
     try:
         dbid = submit_curation(hash_val, tag, CURATOR_EMAIL, ip, text, ev_hash,
                                source_api)
     except BadHashError as e:
         abort(Response("Invalid hash: %s." % e.mk_hash, 400))
         return
-    CURATIONS.append(dict(request.json))
-    CURATIONS[-1]['id'] = dbid
+
+    # Add the curation to the cache
+    key = (hash_val, ev_hash)
+    entry = dict(request.json)
+    entry.update(id=dbid, tag=tag, ip=ip, email=CURATOR_EMAIL)
+    if key not in CURATIONS['cache']:
+        CURATIONS['cache'][key] = []
+    CURATIONS['cache'][key].append(entry)
+
+    # Respond
     res = {'result': 'success', 'ref': {'id': dbid}}
     print("Got result: %s" % str(res))
     return jsonify(res)
 
 
-@app.route('/curations', methods=['GET'])
-def get_curations():
-    return jsonify(CURATIONS)
+@app.route('/curations/<stmt_hash>/<ev_hash>', methods=['GET'])
+def get_curations(stmt_hash, ev_hash):
+    return jsonify(CURATIONS['cache'][(stmt_hash, ev_hash)])
 
 
 def get_parser():
