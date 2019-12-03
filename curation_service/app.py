@@ -2,7 +2,8 @@ import pickle
 import argparse
 from os import path
 
-from flask import Flask, request, jsonify, url_for, abort
+from flask import Flask, request, jsonify, url_for, abort, Response
+from indra_db.exceptions import BadHashError
 
 from jinja2 import Environment, ChoiceLoader
 
@@ -22,6 +23,8 @@ env.globals.update(url_for=url_for)
 
 CURATIONS = []
 WORKING_DIR = None
+CURATION_TAG = None
+CURATOR_EMAIL = None
 
 
 @app.route('/show/<load_file>', methods=['GET'])
@@ -61,8 +64,24 @@ def load(load_file):
 
 @app.route('/curate', methods=['POST'])
 def submit_curation():
+    hash_val = request.json.get('stmt_hash')
+    print("Adding curation for statement %s." % hash_val)
+    ev_hash = request.json.get('ev_hash')
+    source_api = request.json.pop('source', 'INDRA CURATION')
+    tag = CURATION_TAG
+    ip = request.remote_addr
+    text = request.json.get('text')
+    try:
+        dbid = submit_curation(hash_val, tag, CURATOR_EMAIL, ip, text, ev_hash,
+                               source_api)
+    except BadHashError as e:
+        abort(Response("Invalid hash: %s." % e.mk_hash, 400))
+        return
     CURATIONS.append(dict(request.json))
-    return jsonify({'status': 'good'}) 
+    CURATIONS[-1]['id'] = dbid
+    res = {'result': 'success', 'ref': {'id': dbid}}
+    print("Got result: %s" % str(res))
+    return jsonify(res)
 
 
 @app.route('/curations', methods=['GET'])
@@ -78,6 +97,10 @@ def get_parser():
     parser.add_argument('working_dir',
                         help=("The directory containing any files you wish "
                               "to load."))
+    parser.add_argument('tag',
+                        help=('Give these curations a tag to separate them '
+                              'out from the rest.'))
+    parser.add_argument('email', help='Enter your, the curator\'s, email')
     return parser
 
 
@@ -85,5 +108,7 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     WORKING_DIR = path.abspath(args.working_dir)
+    CURATION_TAG = args.tag
+    CURATOR_EMAIL = args.email
 
     app.run()
