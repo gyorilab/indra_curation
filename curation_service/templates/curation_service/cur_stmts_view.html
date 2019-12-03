@@ -10,8 +10,10 @@
 {% endblock %}
 
 {% block body %}
-    {{ super() }}
+    <div id="curation-app">
+        {{ super() }}
 
-    <!-- Include the curation app -->
-    <script src="{{  url_for('static', filename='curation.js') }}"></script>
+        <!-- Include the curation app -->
+        <script src="{{  url_for('static', filename='curation.js') }}"></script>
+    </div>
 {%  endblock %}
