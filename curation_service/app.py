@@ -3,6 +3,7 @@ import argparse
 from os import path
 
 from flask import Flask, request, jsonify, url_for, abort, Response
+from indra_db.client import submit_curation
 from indra_db.exceptions import BadHashError
 
 from jinja2 import Environment, ChoiceLoader
@@ -63,7 +64,7 @@ def load(load_file):
 
 
 @app.route('/curate', methods=['POST'])
-def submit_curation():
+def submit_curation_to_db():
     hash_val = request.json.get('stmt_hash')
     print("Adding curation for statement %s." % hash_val)
     ev_hash = request.json.get('ev_hash')
