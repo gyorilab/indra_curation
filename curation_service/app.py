@@ -69,23 +69,23 @@ def load(load_file):
 def submit_curation_to_db():
     # Unpack the request.
     hash_val = request.json.get('stmt_hash')
-    ev_hash = request.json.get('ev_hash')
+    source_hash = request.json.get('source_hash')
     text = request.json.get('text')
-    print(f"Adding curation for stmt={hash_val} and ev={ev_hash}")
+    tag = request.json.get('error_type')
+    print(f"Adding curation for stmt={hash_val} and source_hash={source_hash}")
 
     # Add a new entry to the database.
-    source_api = 'INDRA CURATION'
-    tag = CURATION_TAG
+    source_api = CURATION_TAG
     ip = request.remote_addr
     try:
-        dbid = submit_curation(hash_val, tag, CURATOR_EMAIL, ip, text, ev_hash,
-                               source_api)
+        dbid = submit_curation(hash_val, tag, CURATOR_EMAIL, ip, text,
+                               source_hash, source_api)
     except BadHashError as e:
         abort(Response("Invalid hash: %s." % e.mk_hash, 400))
         return
 
     # Add the curation to the cache
-    key = (hash_val, ev_hash)
+    key = (hash_val, source_hash)
     entry = dict(request.json)
     entry.update(id=dbid, tag=tag, ip=ip, email=CURATOR_EMAIL,
                  source=source_api, date=datetime.now())
@@ -131,7 +131,7 @@ def update_curations():
     CURATIONS['cache'] = {}
 
     attr_maps = ['tag', 'text', ('curator', 'email'), 'source', 'ip', 'date',
-                 'id', ('pa_hash', 'stmt_hash'), ('source_hash', 'ev_hash')]
+                 'id', ('pa_hash', 'stmt_hash'), 'source_hash']
 
     # Build up the curation dict.
     db = get_db('primary')

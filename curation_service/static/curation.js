@@ -110,7 +110,11 @@ Vue.component('curation-row', {
                 other: 'Other...'
             },
             submitting: false,
-            message: ""
+            message: "",
+            pmid_row = null,
+            icon = null,
+            source_hash = '',
+            stmt_hash = ''
         }
     },
     computed: {
