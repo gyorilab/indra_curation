@@ -107,6 +107,14 @@ def get_curation(stmt_hash, ev_hash):
     return jsonify(CURATIONS['cache'][(stmt_hash, ev_hash)])
 
 
+@app.route('/curations/list', methods=['GET'])
+def get_curation_list():
+    time_since_update = datetime.now() - CURATIONS['last_updated']
+    if time_since_update.total_seconds() > 3600:  # one hour
+        update_curations()
+    return jsonify(CURATIONS['cache'])
+
+
 @app.route('/curations/update', methods=['POST'])
 def update_curations_endpoint():
     update_curations()
@@ -135,7 +143,7 @@ def update_curations():
 
     # Build up the curation dict.
     db = get_db('primary')
-    curations = db.select_all(db.Curations)
+    curations = db.select_all(db.Curation)
     for curation in curations:
         key = (curation.pa_hash, curation.source_hash)
         if key not in CURATIONS['cache']:
