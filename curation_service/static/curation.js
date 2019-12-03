@@ -157,3 +157,34 @@ Vue.component('curation-row', {
 
 var app = new Vue({el:'#curation-app'})
 
+
+// Turn on all the toggle buttons and connect them to a funciton.
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Turn on all the toggle buttons.
+   document.querySelectorAll('.curation_toggle')
+       .forEach(function(toggle) {
+           toggle.onclick = () => {
+               const clickedRow = document.querySelector(`#${this.dataset.parent_id}`);
+               const cur_id = addCurationRow(clickedRow);
+               this.onclick = () => {
+                   slideToggle(cur_id);
+               };
+           };
+           toggle.innerHTML = "&#9998;";
+           toggle.style.display = 'inline-block';
+       })
+});
+
+
+function addCurationRow(clickedRow) {
+    // Create the row
+    let curationRow = document.createElement('curation-row');
+    curationRow.id = clickedRow.id + '-cur';
+
+    // Add the row to the evidence row
+    clickedRow.parentNode.insertBefore(curationRow, clickedRow.nextSibling);
+
+    return curationRow.id;
+}
+

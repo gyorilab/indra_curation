@@ -1,0 +1,17 @@
+{% extends "indra/statements_view.html" %}
+
+{% block scripts %}
+    {{ super() }}
+    <!-- development version, includes helpful console warnings -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        let CURATION_ADDR = "{{ url_for('submit_curation', hash_val='') }}";
+    </script>
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+
+    <!-- Include the curation app -->
+    <script src="curation.js"></script>
+{%  endblock %}
