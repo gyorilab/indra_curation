@@ -83,7 +83,7 @@ Vue.component('curation-row', {
                     type='button'
                     class='btn btn-default btn-submit pull-right'
                     style='padding: 2px 6px'
-                    v-on:click='loadPriors'>Load Priors
+                    v-on:click='loadPrevious'>Load Previous
                 </button>
             </div>
             <div class='submission_status'
@@ -98,9 +98,9 @@ Vue.component('curation-row', {
             <div v-if='message'>
               message: {{ message }}
             </div>
-            <div v-if='priors'>
+            <div v-if='previous'>
               <h5>Prior Curations</h5>
-              <div v-for='entry in priors'>
+              <div v-for='entry in prievious'>
                  <hr>
                  error_type: {{ entry.error_type }}<br>
                  source_api: {{ entry.source }}<br>
@@ -132,7 +132,7 @@ Vue.component('curation-row', {
             },
             submitting: false,
             message: "",
-            priors: null,
+            previous: null,
         }
     },
     computed: {
@@ -174,8 +174,8 @@ Vue.component('curation-row', {
             this.submitting = false;
         },
 
-        loadPriors: function() {
-            console.log("Loading prior curations.");
+        loadPrevious: function() {
+            console.log("Loading previous curations.");
             this.getCurations();
         },
 
@@ -204,7 +204,7 @@ Vue.component('curation-row', {
                     this.message = "Curation successful!";
                     this.clear();
                     this.icon.style = "color: #00FF00";
-                    this.priors = [...this.priors, cur_dict];
+                    this.previous = [...this.previous, cur_dict];
                     break;
                 case 400:
                     this.message = resp.status + ": Bad Curation Data";
@@ -237,7 +237,7 @@ Vue.component('curation-row', {
             console.log('Response Status: ' + resp.status);
             const data = await resp.json();
             console.log('Got back: ' + JSON.stringify(data));
-            this.priors = data;
+            this.previous = data;
             return;
         },
     }
