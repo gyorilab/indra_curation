@@ -99,12 +99,14 @@ Vue.component('curation-row', {
               message: {{ message }}
             </div>
             <div v-if='priors'>
+              <h5>Prior Curations</h5>
               <div v-for='entry in priors'>
-                 error_type: {{ entry.value.tag }}<br>
-                 source_api: {{ entry.value.source }}<br>
-                 date: {{ entry.value.date }}<br>
-                 email: {{ entry.value.email }}<br>
-                 text: {{ entry.value.text }}<br>
+                 <hr>
+                 error_type: {{ entry.tag }}<br>
+                 source_api: {{ entry.source }}<br>
+                 date: {{ entry.date }}<br>
+                 email: {{ entry.email }}<br>
+                 comment: {{ entry.text }}<br>
               </div>
             </div>
           </div>
@@ -174,9 +176,7 @@ Vue.component('curation-row', {
 
         loadPriors: function() {
             console.log("Loading prior curations.");
-
-            data = this.getCurations();
-            this.priors = data;
+            this.getCurations();
         },
 
         clear: function () {
@@ -237,7 +237,8 @@ Vue.component('curation-row', {
             console.log('Response Status: ' + resp.status);
             const data = await resp.json();
             console.log('Got back: ' + JSON.stringify(data));
-            return data;
+            this.priors = data;
+            return;
         },
     }
 })

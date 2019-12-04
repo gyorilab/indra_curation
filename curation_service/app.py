@@ -68,9 +68,9 @@ def load(load_file):
 @app.route('/curations/submit', methods=['POST'])
 def submit_curation_to_db():
     # Unpack the request.
-    hash_val = request.json.get('stmt_hash')
-    source_hash = request.json.get('source_hash')
-    text = request.json.get('text')
+    hash_val = int(request.json.get('stmt_hash'))
+    source_hash = int(request.json.get('source_hash'))
+    text = request.json.get('comment')
     tag = request.json.get('error_type')
     print(f"Adding curation for stmt={hash_val} and source_hash={source_hash}")
 
@@ -99,15 +99,22 @@ def submit_curation_to_db():
     return jsonify(res)
 
 
-@app.route('/curations/load/<stmt_hash>/<ev_hash>', methods=['GET'])
+@app.route('/curations/<stmt_hash>/<ev_hash>', methods=['GET'])
 def get_curation(stmt_hash, ev_hash):
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
         update_curations()
-    return jsonify(CURATIONS['cache'][(stmt_hash, ev_hash)])
+
+    key = (int(stmt_hash), int(ev_hash))
+    print(f"Looking for curations matching {key}")
+    relevant_curations = CURATIONS['cache'].get(key, [])
+    print("Returning with result:\n"
+          + '\n'.join(str(e) for e in relevant_curations))
+
+    return jsonify(relevant_curations)
 
 
-@app.route('/curations/list', methods=['GET'])
+@app.route('/curations', methods=['GET'])
 def get_curation_list():
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
