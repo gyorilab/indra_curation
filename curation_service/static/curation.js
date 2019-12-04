@@ -102,11 +102,11 @@ Vue.component('curation-row', {
               <h5>Prior Curations</h5>
               <div v-for='entry in priors'>
                  <hr>
-                 error_type: {{ entry.tag }}<br>
+                 error_type: {{ entry.error_type }}<br>
                  source_api: {{ entry.source }}<br>
                  date: {{ entry.date }}<br>
                  email: {{ entry.email }}<br>
-                 comment: {{ entry.text }}<br>
+                 comment: {{ entry.comment }}<br>
               </div>
             </div>
           </div>
@@ -204,7 +204,7 @@ Vue.component('curation-row', {
                     this.message = "Curation successful!";
                     this.clear();
                     this.icon.style = "color: #00FF00";
-                    this.priors = this.prios
+                    this.priors = [...this.priors, cur_dict];
                     break;
                 case 400:
                     this.message = resp.status + ": Bad Curation Data";

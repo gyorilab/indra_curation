@@ -68,27 +68,27 @@ def load(load_file):
 @app.route('/curations/submit', methods=['POST'])
 def submit_curation_to_db():
     # Unpack the request.
-    hash_val = int(request.json.get('stmt_hash'))
+    pa_hash = int(request.json.get('stmt_hash'))
     source_hash = int(request.json.get('source_hash'))
     text = request.json.get('comment')
     tag = request.json.get('error_type')
-    print(f"Adding curation for stmt={hash_val} and source_hash={source_hash}")
+    print(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
     ip = request.remote_addr
     try:
-        dbid = submit_curation(hash_val, tag, CURATOR_EMAIL, ip, text,
+        dbid = submit_curation(pa_hash, tag, CURATOR_EMAIL, ip, text,
                                source_hash, source_api)
     except BadHashError as e:
         abort(Response("Invalid hash: %s." % e.mk_hash, 400))
         return
 
     # Add the curation to the cache
-    key = (hash_val, source_hash)
+    key = (pa_hash, source_hash)
     entry = dict(request.json)
-    entry.update(id=dbid, tag=tag, ip=ip, email=CURATOR_EMAIL,
-                 source=source_api, date=datetime.now())
+    entry.update(id=dbid, ip=ip, email=CURATOR_EMAIL, source=source_api,
+                 date=datetime.now())
     if key not in CURATIONS['cache']:
         CURATIONS['cache'][key] = []
     CURATIONS['cache'][key].append(entry)
@@ -146,8 +146,9 @@ def get_parser():
 def update_curations():
     CURATIONS['cache'] = {}
 
-    attr_maps = ['tag', 'text', ('curator', 'email'), 'source', 'ip', 'date',
-                 'id', ('pa_hash', 'stmt_hash'), 'source_hash']
+    attr_maps = [('tag', 'error_type'), ('text', 'comment'),
+                 ('curator', 'email'), 'source', 'ip', 'date', 'id',
+                 ('pa_hash', 'stmt_hash'), 'source_hash']
 
     # Build up the curation dict.
     db = get_db('primary')
