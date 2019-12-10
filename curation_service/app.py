@@ -48,6 +48,9 @@ def _list_files(name):
 
         # Get the list of possible files, choose html if available, else pkl.
         list_resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if not list_resp['KeyCount']:
+            print(f"No files match prefix: {prefix}")
+            return []
         ret = (f"s3:{bucket}/{e['Key']}" for e in list_resp['Contents'])
     else:
         ret = (path.join(WORKING_DIR, fn) for fn in listdir(WORKING_DIR)
@@ -107,14 +110,17 @@ def load(name):
 
     if file_path is None:
         print(f"ERROR: Invalid name: {name}")
-        abort(400, f"Invalid name: neither {name}.pkl nor {name}.html exists.")
+        abort(400, (f"Invalid name: neither {name}.pkl nor {name}.html "
+                    f"exists in {WORKING_DIR}. If using s3 directory, "
+                    f"remember to add the '/' to the end for your working "
+                    f"directory."))
         return
 
     raw_content = _get_file(file_path)
 
     # If the file is HTML, just return it.
     if is_html:
-        print("Returinging with cached HTML file.")
+        print("Returning with cached HTML file.")
         return raw_content
 
     # Get the pickle file.
