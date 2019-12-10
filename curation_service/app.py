@@ -252,9 +252,14 @@ def update_curations():
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
-    WORKING_DIR = path.abspath(args.working_dir)
+    WORKING_DIR = args.working_dir
+    print(f"Working in {WORKING_DIR}")
+
     CURATION_TAG = args.tag
+    print(f"Using tag {CURATION_TAG}")
+
     CURATOR_EMAIL = args.email
+    print(f"Curator email: {CURATOR_EMAIL}")
 
     update_curations()
 
