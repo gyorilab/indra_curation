@@ -1,6 +1,8 @@
+import re
+import boto3
 import pickle
 import argparse
-from os import path
+from os import path, listdir
 from datetime import datetime
 
 from flask import Flask, request, jsonify, url_for, abort, Response
@@ -30,38 +32,107 @@ CURATION_TAG = None
 CURATOR_EMAIL = None
 
 
-@app.route('/show/<load_file>', methods=['GET'])
-def load(load_file):
-    # Get the full path to the file.
-    load_file = path.join(WORKING_DIR, load_file)
-    print(f"Attempting to load {load_file}")
+s3_path_patt = re.compile('^s3:(\w+)/(.*?)$')
 
-    # Load or generate the HTML file (as needed)
-    if path.exists(load_file + '.html'):
-        load_file += '.html'
-        print("Using existing html file.")
-        html_filename = load_file
-        with open(html_filename, 'r') as f:
-            content = f.read()
-    elif path.exists(load_file + '.pkl'):
-        load_file += '.pkl'
-        with open(load_file, 'rb') as f:
-            stmts = pickle.load(f)
-        html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
-                                       db_rest_url=request.url_root[:-1])
-        template = env.get_template('curation_service/cur_stmts_view.html')
-        content = html_assembler.make_model(template)
-        html_filename = load_file.replace('.pkl', '.html')
-        with open(html_filename, 'w') as f:
-            f.write(content)
-        print(f"Generated HTML from {len(stmts)} Statements.")
+
+def _list_files(name):
+    """List files with the given name."""
+    m = s3_path_patt.match(WORKING_DIR)
+    if m:
+        # We're using s3
+        s3 = boto3.client('s3')
+        bucket, prefix = m.groups()
+
+        # Extend the prefix with the filename
+        prefix += name
+
+        # Get the list of possible files, choose html if available, else pkl.
+        list_resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        ret = (f"s3:{bucket}/{e['Key']}" for e in list_resp['Contents'])
     else:
-        print(f"Invalid input file: {load_file}")
-        abort(400, (f"Invalid input file: neither {load_file}.pkl or "
-                    f"{load_file}.html exist."))
+        ret = (path.join(WORKING_DIR, fn) for fn in listdir(WORKING_DIR)
+               if fn.startswith(name))
+    return ret
+
+
+def _get_file(file_path):
+    """Get a file of the given name."""
+    m = s3_path_patt.match(file_path)
+    if m:
+        # We're using s3
+        s3 = boto3.client('s3')
+        bucket, key = m.groups()
+
+        # Get the file from s3
+        resp = s3.get_object(Bucket=bucket, Key=key)
+        ret = resp['Body'].read()
+    else:
+        with open(file_path, 'r') as f:
+            ret = f.read()
+    return ret
+
+
+def _put_file(file_path, content):
+    """Save a file with the given name."""
+    m = s3_path_patt.match(file_path)
+    if m:
+        # We're using s3
+        s3 = boto3.client('s3')
+        bucket, key = m.groups()
+
+        # Put the file on s3
+        s3.put_object(Bucket=bucket, Key=key, Body=content)
+    else:
+        with open(file_path, 'w') as f:
+            f.write(content)
+    return
+
+
+@app.route('/show/<name>', methods=['GET'])
+def load(name):
+    assert WORKING_DIR is not None, "WORKING_DIR is not defined."
+
+    print(f"Attempting to load {name}")
+
+    # Select the correct file
+    is_html = False
+    file_path = None
+    for option in _list_files(name):
+        if option.endswith('.html'):
+            file_path = option
+            is_html = True
+            break
+        elif option.endswith('.pkl'):
+            file_path = option
+
+    if file_path is None:
+        print(f"ERROR: Invalid name: {name}")
+        abort(400, f"Invalid name: neither {name}.pkl nor {name}.html exists.")
         return
 
-    print(f"Presenting {html_filename}")
+    raw_content = _get_file(file_path)
+
+    # If the file is HTML, just return it.
+    if is_html:
+        print("Returinging with cached HTML file.")
+        return raw_content
+
+    # Get the pickle file.
+    stmts = pickle.loads(raw_content)
+
+    # Build the HTML file
+    html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
+                                   db_rest_url=request.url_root[:-1])
+    template = env.get_template('curation_service/cur_stmts_view.html')
+    content = html_assembler.make_model(template)
+
+    # Save the file to s3
+    html_file_path = file_path.replace('.pkl', '.html')
+    print(f"Saved HTML file to {html_file_path}")
+    _put_file(html_file_path, content)
+
+    # Return the result.
+    print("Returning with newly generated HTML file.")
     return content
 
 
@@ -135,10 +206,17 @@ def get_parser():
     )
     parser.add_argument('working_dir',
                         help=("The directory containing any files you wish "
-                              "to load."))
+                              "to load. This may either be local or on s3. If "
+                              "using s3, give the prefix as "
+                              "'s3:bucket/prefix/path/'. Without including "
+                              "'s3:', it will be assumed the path is local. "
+                              "Note that no '/' will be added automatically "
+                              "to the end of the prefix."))
     parser.add_argument('tag',
                         help=('Give these curations a tag to separate them '
-                              'out from the rest.'))
+                              'out from the rest. This tag is stored as '
+                              '"source" in the INDRA Database Curation '
+                              'table.'))
     parser.add_argument('email', help='Enter your, the curator\'s, email')
     return parser
 
