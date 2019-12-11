@@ -130,7 +130,7 @@ def load(name):
     html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
                                    db_rest_url=request.url_root[:-1])
     template = env.get_template('curation_service/cur_stmts_view.html')
-    content = html_assembler.make_model(template)
+    content = html_assembler.make_model(template, with_grouping=False)
 
     # Save the file to s3
     html_file_path = file_path.replace('.pkl', '.html')
