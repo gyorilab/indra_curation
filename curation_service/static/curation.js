@@ -100,7 +100,7 @@ Vue.component('curation-row', {
             </div>
             <div v-if='previous'>
               <h5>Prior Curations</h5>
-              <div v-for='entry in prievious'>
+              <div v-for='entry in previous'>
                  <hr>
                  error_type: {{ entry.error_type }}<br>
                  source_api: {{ entry.source }}<br>
