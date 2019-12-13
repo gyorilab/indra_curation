@@ -306,6 +306,7 @@ Vue.component('stmt-display', {
                       <h4 v-html='stmt.english'></h4>
                       <div v-for='ev in stmt.evidence' :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
                         <p v-html='ev.text'></p>
+                        <curation-row/>
                       </div>
                     </div>
                 </div>
