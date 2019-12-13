@@ -298,7 +298,7 @@ Vue.component('stmt-display', {
           <div class='header-row'>
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
-            <div v-for='(top_group, key) in stmts' class='top-group-row' :key='top_group.html_key'>
+            <div v-for='top_group in stmts' class='top-group-row' :key='top_group.html_key'>
                 <h2 v-html='top_group.label'></h2>
                 <div v-for='mid_group in top_group.stmts_formatted' class='stmt-group-row' :key='mid_group.short_name_key'>
                     <h3 v-html='mid_group.short_name'></h3>
