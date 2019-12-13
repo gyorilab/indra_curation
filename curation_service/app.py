@@ -1,3 +1,4 @@
+import json
 import re
 import boto3
 import pickle
@@ -5,7 +6,8 @@ import argparse
 from os import path, listdir
 from datetime import datetime
 
-from flask import Flask, request, jsonify, url_for, abort, Response
+from flask import Flask, request, jsonify, url_for, abort, Response, \
+    render_template
 from jinja2 import Environment, ChoiceLoader
 
 from indra.assemblers.html import HtmlAssembler
@@ -141,6 +143,61 @@ def load(name):
     print("Returning with newly generated HTML file.")
     return content
 
+
+@app.route('/json', methods=['GET'])
+def get_nice_interface():
+    return render_template('curation_service/fresh_stmts_view.html')
+
+
+@app.route('/json/<name>', methods=['GET'])
+def get_json_content(name):
+    assert WORKING_DIR is not None, "WORKING_DIR is not defined."
+
+    print(f"Attempting to load JSON for {name}")
+
+    # Select the correct file
+    is_json = False
+    file_path = None
+    for option in _list_files(name):
+        if option.endswith('.json'):
+            file_path = option
+            is_json = True
+            break
+        elif option.endswith('.pkl'):
+            file_path = option
+
+    if file_path is None:
+        print(f"ERROR: Invalid name: {name}")
+        abort(400, (f"Invalid name: neither {name}.pkl nor {name}.json "
+                    f"exists in {WORKING_DIR}. If using s3 directory, "
+                    f"remember to add the '/' to the end for your working "
+                    f"directory."))
+        return
+
+    raw_content = _get_file(file_path)
+
+    # If the file is HTML, just return it.
+    if is_json:
+        print("Returning with cached JSON file.")
+        return jsonify(json.loads(raw_content))
+
+    # Get the pickle file.
+    stmts = pickle.loads(raw_content)
+
+    # Build the HTML file
+    html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
+                                   db_rest_url=request.url_root[:-1])
+    content = html_assembler.make_json_model()
+
+    # Save the file to s3
+    json_file_path = file_path.replace('.pkl', '.json')
+    print(f"Saved JSON file to {json_file_path}")
+    _put_file(json_file_path, json.dumps(content, indent=2))
+
+    # Return the result.
+    print("Returning with newly generated JSON file.")
+    return jsonify(content)
+    
 
 @app.route('/curations/submit', methods=['POST'])
 def submit_curation_to_db():

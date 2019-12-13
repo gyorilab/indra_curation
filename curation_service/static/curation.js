@@ -243,5 +243,102 @@ Vue.component('curation-row', {
     }
 })
 
+Vue.component('interface', {
+    template: `
+        <div class='interface'>
+            <div class='form' 
+                 style='display:inline-block; 
+                        vertical-align: middle; 
+                        top: 0px'>
+                <form name='user_feedback_form'>
+                    <input type='text' 
+                           v-model='name'
+                           maxlength='240'
+                           placeholder='Enter stmt set name.' 
+                           value=''
+                           style='width: 360px;'>
+                </form>
+            </div>
+            <div class='stmt_button'
+                 style='display:inline-block; 
+                        vertical-align: middle;'>
+                <button
+                    type='button'
+                    class='btn btn-default btn-submit pull-right'
+                    style='padding: 2px 6px'
+                    v-on:click='getStmts'>Submit
+                </button>
+            </div>
+            <div v-if='stmts'>
+                <h1>Statement Results</h1>
+                <stmt-display :stmts='stmts'/>
+            </div>
+        </div>
+        `,
+    data: function () {
+        return {
+            stmts: null,
+            name: '',
+        }
+    },
+    methods: {
+        getStmts: async function() {
+            const resp = await fetch(`${JSON_ADDR}${this.name}`, {method: 'GET'});
+            console.log("Response status: " + resp.status);
+            const data = await resp.json();
+            this.stmts = data;
+            return;
+        }
+    }
+})
+
+Vue.component('stmt-display', {
+    template: `
+        <div class='stmts'>
+          <div class='header-row'>
+            <h3 v-bind:title="metadata_display">Statements</h3>
+          </div>
+            <div v-for='(top_group, key) in stmts' class='top-group-row' :key='top_group.html_key'>
+                <h2 v-html='top_group.label'></h2>
+                <div v-for='mid_group in top_group.stmts_formatted' class='stmt-group-row' :key='mid_group.short_name_key'>
+                    <h3 v-html='mid_group.short_name'></h3>
+                    <div v-for='stmt in mid_group.stmt_info_list' class='stmt-row' :key='mid_group.short_name_key + stmt.hash'>
+                      <h4 v-html='stmt.english'></h4>
+                      <div v-for='ev in stmt.evidence' :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
+                        <p v-html='ev.text'></p>
+                      </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+
+        `,
+    props: {
+        stmts: Object,
+        metadata: Object,
+        source_key_dict: Object,
+    },
+    data: function () {
+        return {}
+    },
+    computed: {
+        metadata_display: function () {
+            let ret = '';
+            if (this.metadata) {
+                Object.entries(this.metadata).forEach((entry) => {
+                    ret += entry[0] + ': ' + entry[1] + '\n';
+                })
+            }
+            return ret;
+        },
+
+
+    },
+    methods: {
+    }
+})
+
+
 var app = new Vue({el:'#curation-app'})
 
