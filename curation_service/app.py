@@ -187,16 +187,20 @@ def get_json_content(name):
     # Build the HTML file
     html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
                                    db_rest_url=request.url_root[:-1])
-    content = html_assembler.make_json_model()
+    ordered_dict = html_assembler.make_json_model()
+    result = []
+    for key, group_dict in ordered_dict.items():
+        group_dict['key'] = key
+        result.append(group_dict)
 
     # Save the file to s3
     json_file_path = file_path.replace('.pkl', '.json')
     print(f"Saved JSON file to {json_file_path}")
-    _put_file(json_file_path, json.dumps(content, indent=2))
+    _put_file(json_file_path, json.dumps(result, indent=2))
 
     # Return the result.
     print("Returning with newly generated JSON file.")
-    return jsonify(content)
+    return jsonify(result)
     
 
 @app.route('/curations/submit', methods=['POST'])
