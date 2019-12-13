@@ -70,7 +70,7 @@ def _get_file(file_path):
         resp = s3.get_object(Bucket=bucket, Key=key)
         ret = resp['Body'].read()
     else:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'rb') as f:
             ret = f.read()
     return ret
 
