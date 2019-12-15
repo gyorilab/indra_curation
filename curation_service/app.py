@@ -32,7 +32,7 @@ CURATION_TAG = None
 CURATOR_EMAIL = None
 
 
-s3_path_patt = re.compile('^s3:(\w+)/(.*?)$')
+s3_path_patt = re.compile('^s3:([-a-zA-Z0-9_]+)/(.*?)$')
 
 
 def _list_files(name):
