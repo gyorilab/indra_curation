@@ -223,7 +223,7 @@ Vue.component('curation-row', {
         },
 
         getCurations: async function() {
-            const resp = await fetch(`${LIST_ADDR}/${this.stmt_hash}/${this.source_hash}`, {
+            const resp = await fetch(`${CURATION_LIST_ADDR}/${this.stmt_hash}/${this.source_hash}`, {
                     method: 'GET',
                  });
             console.log('Response Status: ' + resp.status);
@@ -243,12 +243,14 @@ Vue.component('interface', {
                         vertical-align: middle; 
                         top: 0px'>
                 <form name='user_feedback_form'>
-                    <input type='text' 
-                           v-model='name'
-                           maxlength='240'
-                           placeholder='Enter stmt set name.' 
-                           value=''
-                           style='width: 360px;'>
+                  <select v-model='name'>
+                      <option value='' selected disabled hidden>Select a collection of Statements...</option>
+                      <option v-for='option  in options'
+                              :value='option'
+                              :key='option'>
+                          {{ option }}
+                      </option>
+                  </select>
                 </form>
             </div>
             <div class='stmt_button'
@@ -271,14 +273,26 @@ Vue.component('interface', {
         return {
             stmts: null,
             name: '',
+            options: null
         }
+    },
+    created: function () {
+        this.getOptions()
     },
     methods: {
         getStmts: async function() {
             const resp = await fetch(`${JSON_ADDR}${this.name}`, {method: 'GET'});
-            console.log("Response status: " + resp.status);
+            console.log("getStmts response status: " + resp.status);
             const data = await resp.json();
             this.stmts = data;
+            return;
+        },
+
+        getOptions: async function() {
+            const resp = await fetch(`${LIST_ADDR}`, {method: 'GET'});
+            console.log("getOptions response status: " + resp.status);
+            const data = await resp.json();
+            this.options = data;
             return;
         }
     }
