@@ -41,84 +41,90 @@ document.querySelectorAll('.curation_toggle')
 
 Vue.component('curation-row', {
     template: `
-        <div v-if='display' class='row cchild' style='border-top: 1px solid #FFFFFF;'>
-          <div class='col' style='padding: 0px; border-top: 1px solid #FFFFFF;'>
-            <select v-model='error_type'>
-                <option value='' selected disabled hidden>Select error type...</option>
-                <option v-for='(option_label, option_value) in options'
-                        v-bind:value='option_value'
-                        :key='option_value'>
-                    {{ option_label }}
-                </option>
-            </select>
-            <div class='form' 
-                 style='display:inline-block; 
-                        vertical-align: middle; 
-                        top: 0px'>
-                <form name='user_feedback_form'>
-                    <input type='text' 
-                           v-model='comment'
-                           maxlength='240'
-                           name='user_feedback' 
-                           placeholder='Optional description (240 chars)' 
-                           value=''
-                           style='width: 360px;'>
-                </form>
-            </div>
-            <div class='curation_button'
-                 style='display:inline-block; 
-                        vertical-align: middle;'>
-                <button
-                    type='button'
-                    class='btn btn-default btn-submit pull-right'
-                    style='padding: 2px 6px'
-                    :disabled='submitting'
-                    v-on:click='submitForm'>Submit
-                </button>
-            </div>
-            <div class='curation_button'
-                 style='display:inline-block; 
-                        vertical-align: middle;'>
-                <button
-                    type='button'
-                    class='btn btn-default btn-submit pull-right'
-                    style='padding: 2px 6px'
-                    v-on:click='loadPrevious'>Load Previous
-                </button>
-            </div>
-            <div class='submission_status'
-                 style='display:inline-block; 
-                        vertical-align: middle;'>
-              <a class='submission_status'></a>
-            </div>
-            <div v-if='data_entered'>
-              error_type: {{ error_type }}<br>
-              comment: {{ comment }}
-            </div>
-            <div v-if='message'>
-              message: {{ message }}
-            </div>
-            <div v-if='previous'>
-              <h5>Prior Curations</h5>
-              <div v-for='entry in previous'>
-                 <hr>
-                 error_type: {{ entry.error_type }}<br>
-                 source_api: {{ entry.source }}<br>
-                 date: {{ entry.date }}<br>
-                 email: {{ entry.email }}<br>
-                 comment: {{ entry.comment }}<br>
+        <div class='container' v-if='open'>
+          <div class='row cchild' style='border-top: 1px solid #FFFFFF;'>
+            <div class='col' style='padding: 0px; border-top: 1px solid #FFFFFF;'>
+              <select v-model='error_type'>
+                  <option value='' selected disabled hidden>Select error type...</option>
+                  <option v-for='(option_label, option_value) in options'
+                          v-bind:value='option_value'
+                          :key='option_value'>
+                      {{ option_label }}
+                  </option>
+              </select>
+              <div class='form' 
+                   style='display:inline-block; 
+                          vertical-align: middle; 
+                          top: 0px'>
+                  <form name='user_feedback_form'>
+                      <input type='text' 
+                             v-model='comment'
+                             maxlength='240'
+                             name='user_feedback' 
+                             placeholder='Optional description (240 chars)' 
+                             value=''
+                             style='width: 360px;'>
+                  </form>
+              </div>
+              <div class='curation_button'
+                   style='display:inline-block; 
+                          vertical-align: middle;'>
+                  <button
+                      type='button'
+                      class='btn btn-default btn-submit pull-right'
+                      style='padding: 2px 6px'
+                      :disabled='submitting'
+                      v-on:click='submitForm'>Submit
+                  </button>
+              </div>
+              <div class='curation_button'
+                   style='display:inline-block; 
+                          vertical-align: middle;'>
+                  <button
+                      type='button'
+                      class='btn btn-default btn-submit pull-right'
+                      style='padding: 2px 6px'
+                      v-on:click='loadPrevious'>Load Previous
+                  </button>
+              </div>
+              <div class='submission_status'
+                   style='display:inline-block; 
+                          vertical-align: middle;'>
+                <a class='submission_status'></a>
+              </div>
+              <div v-if='data_entered'>
+                error_type: {{ error_type }}<br>
+                comment: {{ comment }}
+              </div>
+              <div v-if='message'>
+                message: {{ message }}
+              </div>
+              <div v-if='previous'>
+                <h5>Prior Curations</h5>
+                <div v-for='entry in previous'>
+                   <hr>
+                   error_type: {{ entry.error_type }}<br>
+                   source_api: {{ entry.source }}<br>
+                   date: {{ entry.date }}<br>
+                   email: {{ entry.email }}<br>
+                   comment: {{ entry.comment }}<br>
+                </div>
               </div>
             </div>
           </div>
         </div>`,
+    props: {
+        open: Boolean,
+        source_hash: Number,
+        stmt_hash: Number
+    },
     data: function() {
         return {
-            is_on: true,
-	    comment: '',
+        comment: '',
             error_type: '',
-	    options: {
-		correct: 'Correct',
-		entity_boundaries: 'Entity Boundaries',
+        options: {
+        correct: 'Correct',
+        entity_boundaries: 'Entity Boundaries',
                 grounding: 'Grounding',
                 no_relation: 'No Relation',
                 wrong_relation: 'Wrong Relation',
@@ -139,20 +145,6 @@ Vue.component('curation-row', {
         data_entered: function () {
             return Boolean(this.comment) || Boolean(this.error_type);
         },
-
-        display: function () {
-            if (this.icon)
-                return this.icon.dataset.show == 'true';
-            else
-                return true;
-        }
-    },
-    mounted: function () {
-        this.stmt_row = this.$el.parentElement;
-        this.pmid_row = this.stmt_row.children[parseInt(this.$attrs.id.split('-')[4])*2]
-        this.icon = this.pmid_row.getElementsByClassName('curation_toggle')[0];
-        this.source_hash = this.pmid_row.dataset.source_hash;
-        this.stmt_hash = this.stmt_row.dataset.stmt_hash;
     },
     methods: {
         submitForm: function() {
@@ -292,6 +284,52 @@ Vue.component('interface', {
     }
 })
 
+Vue.component('evidence', {
+    template: `
+        <div class='container evidence'>
+          <hr>
+          <div class='row'>
+            <div class='col-1'>
+              <div class='row'>
+                <div class='col-3' v-on:click='toggleCuration'>
+                  &#9998;
+                </div>
+                <div class='col-9'>
+                  {{ source_api }}
+                </div>
+              </div>
+            </div>
+            <div class='col' v-html='text'></div>
+            <div class='col-2'>{{ pmid }}</div>
+          </div>
+          <div class='row'>
+            <div class='col'>
+              <curation-row :open='curation_shown' :stmt_hash='stmt_hash'
+                            :source_hash='source_hash'/>
+            </div>
+          </div>
+        </div>
+        `,
+    props: {
+        text: String,
+        pmid: String,
+        source_api: String,
+        text_refs: Object,
+        source_hash: Number,
+        stmt_hash: Number
+    },
+    data: function() {
+        return {
+            curation_shown: false
+        }
+    },
+    methods: {
+        toggleCuration: function () {
+            this.curation_shown = !this.curation_shown
+        }
+    }
+})
+
 Vue.component('stmt-display', {
     template: `
         <div class='stmts'>
@@ -305,8 +343,7 @@ Vue.component('stmt-display', {
                     <div v-for='stmt in mid_group.stmt_info_list' class='stmt-row' :key='mid_group.short_name_key + stmt.hash'>
                       <h4 v-html='stmt.english'></h4>
                       <div v-for='ev in stmt.evidence' :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
-                        <p v-html='ev.text'></p>
-                        <curation-row/>
+                        <evidence v-bind='ev' :stmt_hash='stmt.hash'/>
                       </div>
                     </div>
                 </div>
@@ -316,7 +353,7 @@ Vue.component('stmt-display', {
 
         `,
     props: {
-        stmts: Object,
+        stmts: Array,
         metadata: Object,
         source_key_dict: Object,
     },
@@ -333,8 +370,6 @@ Vue.component('stmt-display', {
             }
             return ret;
         },
-
-
     },
     methods: {
     }
