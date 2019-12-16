@@ -115,8 +115,8 @@ Vue.component('curation-row', {
         </div>`,
     props: {
         open: Boolean,
-        source_hash: Number,
-        stmt_hash: Number
+        source_hash: String,
+        stmt_hash: String
     },
     data: function() {
         return {
@@ -315,8 +315,8 @@ Vue.component('evidence', {
         pmid: String,
         source_api: String,
         text_refs: Object,
-        source_hash: Number,
-        stmt_hash: Number
+        source_hash: String,
+        stmt_hash: String
     },
     data: function() {
         return {
