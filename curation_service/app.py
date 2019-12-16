@@ -93,6 +93,20 @@ def _put_file(file_path, content):
     return
 
 
+@app.route('/list', methods=['GET'])
+def list_names():
+    assert WORKING_DIR is not None, "WORKING_DIR is not defined."
+
+    # List all files under the prefix.
+    options = set()
+    for option in _list_files(''):
+        for ending in ['.html', '.pkl']:
+            if option.endswith(ending):
+                options.add(option.replace(ending, '')
+                                  .replace(WORKING_DIR, ''))
+    return jsonify(list(options))
+
+
 @app.route('/show/<name>', methods=['GET'])
 def load(name):
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
