@@ -299,8 +299,8 @@ Vue.component('evidence', {
                 </div>
               </div>
             </div>
-            <div class='col' v-html='text'></div>
-            <div class='col-2'>{{ pmid }}</div>
+            <div class='col-10' v-html='text'></div>
+            <div class='col-1 text-right'>{{ pmid }}</div>
           </div>
           <div class='row'>
             <div class='col'>
@@ -337,16 +337,19 @@ Vue.component('stmt-display', {
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
             <div v-for='top_group in stmts' class='top-group-row' :key='top_group.html_key'>
-                <h2 v-html='top_group.label'></h2>
-                <div v-for='mid_group in top_group.stmts_formatted' class='stmt-group-row' :key='mid_group.short_name_key'>
-                  <h3 v-html='mid_group.short_name'></h3>
-                  <div v-for='stmt in mid_group.stmt_info_list' class='stmt-row' :key='mid_group.short_name_key + stmt.hash'>
-                    <h4 v-html='stmt.english'></h4>
-                    <div v-for='ev in stmt.evidence' :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
-                      <evidence v-bind='ev' :stmt_hash='stmt.hash'/>
-                    </div>
+              <h2 v-html='top_group.label'></h2>
+              <div v-for='mid_group in top_group.stmts_formatted'
+                   class='stmt-group-row' :key='mid_group.short_name_key'>
+                <h3 v-html='mid_group.short_name'></h3>
+                <div v-for='stmt in mid_group.stmt_info_list' class='stmt-row'
+                     :key='mid_group.short_name_key + stmt.hash'>
+                  <h4 v-html='stmt.english'></h4>
+                  <div v-for='ev in stmt.evidence'
+                       :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
+                    <evidence v-bind='ev' :stmt_hash='stmt.hash'/>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
         </div>
