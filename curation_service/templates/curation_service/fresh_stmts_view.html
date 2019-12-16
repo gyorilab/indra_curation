@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="https://bigmech.s3.amazonaws.com/indra-db/favicon.ico">
+
+  <title>INDRA Curation</title>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+          integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+          crossorigin="anonymous"></script>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        crossorigin="anonymous">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet"
+        href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+        integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU"
+        crossorigin="anonymous">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+          integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+          crossorigin="anonymous"></script>
+
+  <style>
+      a {
+          color: #256DC5;
+          target-new: tab;
+      }
+      h1 {
+          margin-bottom: 0;
+      }
+      .page-header {
+          padding: 1em;
+      }
+      .has-curation-badge {
+          background-color: #d3fccf;
+          border-radius: 1em;
+      }
+      .badge-subject {
+          background-color: #4a36aa;
+          color: #FFFFFF;
+      }
+  
+      .badge-object {
+          background-color: #2d8e4c;
+          color: #FFFFFF;
+      }
+  
+      .badge-other {
+          background-color: #606060;
+          color: #FFFFFF;
+      }
+      .nvp {
+          padding-left: 0;
+          padding-right: 0;
+      }
+ 
+      .src-api {
+          overflow-x: hidden;
+      }
+      .curation_toggle {
+          cursor: pointer;
+      }
+  </style>
+  <!-- development version, includes helpful console warnings -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+      let CURATION_ADDR = "{{ url_for('submit_curation_to_db') }}";
+      let CURATION_LIST_ADDR = "{{ url_for('get_curation_list') }}";
+      let JSON_ADDR = "{{ url_for('get_json_content', name='') }}";
+      let LIST_ADDR = "{{ url_for('list_names') }}";
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>INDRA Curation</h1>
+    </div>
+    <div id="curation-app">
+      <interface/>
+    </div>
+    <script src="{{  url_for('static', filename='curation.js') }}"></script>
+  </div>
+</body>
+</html>
+
+
