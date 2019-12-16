@@ -300,7 +300,10 @@ Vue.component('stmt-display', {
                   v-html='mid_group.short_name'></h3>
               <div v-for='stmt in mid_group.stmt_info_list' class='stmt-row'
                    :key='mid_group.short_name_key + stmt.hash'>
-                <h4 v-html='stmt.english'></h4>
+                <h4>
+                    <span v-html='stmt.english'></span>
+                    <small class='badge badge-secondary badge-pill'>{{ stmt.evidence.length }}</small>
+                </h4>
                 <div v-for='ev in stmt.evidence'
                      :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
                   <evidence v-bind='ev' :stmt_hash='stmt.hash'/>
