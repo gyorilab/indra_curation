@@ -242,7 +242,10 @@ Vue.component('evidence', {
           <div class='row'>
             <div class='col-1'>
               <div class='row'>
-                <div class='col-3 nvp curation_toggle' v-on:click='toggleCuration'>
+                <div class='col-3 nvp curation_toggle text-center'
+                     :class="{ 'has-curation-badge': num_curations }"
+                     v-on:click='toggleCuration'
+                     :title='num_curations'>
                   &#9998;
                 </div>
                 <div class='col-9 nvp src-api'>
@@ -266,6 +269,7 @@ Vue.component('evidence', {
         pmid: String,
         source_api: String,
         text_refs: Object,
+        num_curations: Number,
         source_hash: String,
         stmt_hash: String
     },
