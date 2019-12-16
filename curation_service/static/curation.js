@@ -327,7 +327,17 @@ Vue.component('interface', {
                 </button>
             </div>
             <div v-if='stmts'>
-                <h1>Statement Results</h1>
+                <h1>
+                  Statement Results
+                  <button
+                      type='button'
+                      class='btn btn-default btn-submit pull-right'
+                      style='padding: 2px 6px'
+                      title='Regnerate Results'
+                      v-on:click='getStmts(true)'>
+                    &#x1f5d8;
+                  </button>
+                </h1>
                 <stmt-display :stmts='stmts'/>
             </div>
         </div>
@@ -343,8 +353,8 @@ Vue.component('interface', {
         this.getOptions()
     },
     methods: {
-        getStmts: async function() {
-            const resp = await fetch(`${JSON_ADDR}${this.name}`, {method: 'GET'});
+        getStmts: async function(regenerate=false) {
+            const resp = await fetch(`${JSON_ADDR}${this.name}?regen=${regenerate}`, {method: 'GET'});
             console.log("getStmts response status: " + resp.status);
             const data = await resp.json();
             this.stmts = data;

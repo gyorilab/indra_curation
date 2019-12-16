@@ -121,11 +121,15 @@ def get_json_content(name):
 
     logger.info(f"Attempting to load JSON for {name}")
 
+    regenerate = request.args.get('regen', False)
+    if regenerate:
+        logger.info(f"Will regenerate JSON for {name}")
+
     # Select the correct file
     is_json = False
     file_path = None
     for option in _list_files(name):
-        if option.endswith('.json'):
+        if option.endswith('.json') and not regenerate:
             file_path = option
             is_json = True
             break
