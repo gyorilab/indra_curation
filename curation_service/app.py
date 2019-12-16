@@ -203,7 +203,8 @@ def get_json_content(name):
 
     # Build the HTML file
     html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
-                                   db_rest_url=request.url_root[:-1])
+                                   db_rest_url=request.url_root[:-1],
+                                   curation_dict=CURATIONS['cache'])
     ordered_dict = html_assembler.make_json_model()
     result = []
     for key, group_dict in ordered_dict.items():
@@ -274,7 +275,7 @@ def get_curation_list():
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
         update_curations()
-    return jsonify([{'key': k, 'value': v}
+    return jsonify([{'key': [str(n) for n in k], 'value': v}
                     for k, v in CURATIONS['cache'].items()])
 
 
