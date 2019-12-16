@@ -2,6 +2,7 @@ import json
 import re
 import boto3
 import pickle
+import logging
 import argparse
 from os import path, listdir
 from datetime import datetime
@@ -17,6 +18,8 @@ from indra_db import get_db
 from indra_db.client import submit_curation
 from indra_db.exceptions import BadHashError
 
+
+logger = logging.getLogger("curation_service")
 
 app = Flask(__name__)
 
@@ -51,7 +54,7 @@ def _list_files(name):
         # Get the list of possible files, choose html if available, else pkl.
         list_resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
         if not list_resp['KeyCount']:
-            print(f"No files match prefix: {prefix}")
+            logger.info(f"No files match prefix: {prefix}")
             return []
         ret = (f"s3:{bucket}/{e['Key']}" for e in list_resp['Contents'])
     else:
@@ -111,7 +114,7 @@ def list_names():
 def load(name):
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
-    print(f"Attempting to load {name}")
+    logger.info(f"Attempting to load {name}")
 
     # Select the correct file
     is_html = False
@@ -125,7 +128,7 @@ def load(name):
             file_path = option
 
     if file_path is None:
-        print(f"ERROR: Invalid name: {name}")
+        logger.error(f"Invalid name: {name}")
         abort(400, (f"Invalid name: neither {name}.pkl nor {name}.html "
                     f"exists in {WORKING_DIR}. If using s3 directory, "
                     f"remember to add the '/' to the end for your working "
@@ -136,7 +139,7 @@ def load(name):
 
     # If the file is HTML, just return it.
     if is_html:
-        print("Returning with cached HTML file.")
+        logger.info("Returning with cached HTML file.")
         return raw_content
 
     # Get the pickle file.
@@ -150,11 +153,11 @@ def load(name):
 
     # Save the file to s3
     html_file_path = file_path.replace('.pkl', '.html')
-    print(f"Saved HTML file to {html_file_path}")
+    logger.info(f"Saved HTML file to {html_file_path}")
     _put_file(html_file_path, content)
 
     # Return the result.
-    print("Returning with newly generated HTML file.")
+    logger.info("Returning with newly generated HTML file.")
     return content
 
 
@@ -167,7 +170,7 @@ def get_nice_interface():
 def get_json_content(name):
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
-    print(f"Attempting to load JSON for {name}")
+    logger.info(f"Attempting to load JSON for {name}")
 
     # Select the correct file
     is_json = False
@@ -181,7 +184,7 @@ def get_json_content(name):
             file_path = option
 
     if file_path is None:
-        print(f"ERROR: Invalid name: {name}")
+        logger.error(f"Invalid name: {name}")
         abort(400, (f"Invalid name: neither {name}.pkl nor {name}.json "
                     f"exists in {WORKING_DIR}. If using s3 directory, "
                     f"remember to add the '/' to the end for your working "
@@ -192,7 +195,7 @@ def get_json_content(name):
 
     # If the file is HTML, just return it.
     if is_json:
-        print("Returning with cached JSON file.")
+        logger.info("Returning with cached JSON file.")
         return jsonify(json.loads(raw_content))
 
     # Get the pickle file.
@@ -209,13 +212,13 @@ def get_json_content(name):
 
     # Save the file to s3
     json_file_path = file_path.replace('.pkl', '.json')
-    print(f"Saved JSON file to {json_file_path}")
+    logger.info(f"Saved JSON file to {json_file_path}")
     _put_file(json_file_path, json.dumps(result, indent=2))
 
     # Return the result.
-    print("Returning with newly generated JSON file.")
+    logger.info("Returning with newly generated JSON file.")
     return jsonify(result)
-    
+
 
 @app.route('/curations/submit', methods=['POST'])
 def submit_curation_to_db():
@@ -224,7 +227,7 @@ def submit_curation_to_db():
     source_hash = int(request.json.get('source_hash'))
     text = request.json.get('comment')
     tag = request.json.get('error_type')
-    print(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
+    logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
@@ -247,7 +250,7 @@ def submit_curation_to_db():
 
     # Respond
     res = {'result': 'success', 'ref': {'id': dbid}}
-    print("Got result: %s" % str(res))
+    logger.info("Got result: %s" % str(res))
     return jsonify(res)
 
 
@@ -258,9 +261,9 @@ def get_curation(stmt_hash, ev_hash):
         update_curations()
 
     key = (int(stmt_hash), int(ev_hash))
-    print(f"Looking for curations matching {key}")
+    logger.info(f"Looking for curations matching {key}")
     relevant_curations = CURATIONS['cache'].get(key, [])
-    print("Returning with result:\n"
+    logger.info("Returning with result:\n"
           + '\n'.join(str(e) for e in relevant_curations))
 
     return jsonify(relevant_curations)
@@ -327,6 +330,7 @@ def update_curations():
         CURATIONS['cache'][key].append(cur_dict)
 
     CURATIONS['last_updated'] = datetime.now()
+    logger.info(f"Loaded {len(CURATIONS['cache'])} curations into cache.")
     return
 
 
@@ -334,13 +338,13 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     WORKING_DIR = args.working_dir
-    print(f"Working in {WORKING_DIR}")
+    logger.info(f"Working in {WORKING_DIR}")
 
     CURATION_TAG = args.tag
-    print(f"Using tag {CURATION_TAG}")
+    logger.info(f"Using tag {CURATION_TAG}")
 
     CURATOR_EMAIL = args.email
-    print(f"Curator email: {CURATOR_EMAIL}")
+    logger.info(f"Curator email: {CURATOR_EMAIL}")
 
     update_curations()
 
