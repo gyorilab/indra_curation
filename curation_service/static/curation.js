@@ -235,69 +235,6 @@ Vue.component('curation-row', {
     }
 })
 
-Vue.component('interface', {
-    template: `
-        <div class='interface'>
-            <div class='form' 
-                 style='display:inline-block; 
-                        vertical-align: middle; 
-                        top: 0px'>
-                <form name='user_feedback_form'>
-                  <select v-model='name'>
-                      <option value='' selected disabled hidden>Select a collection of Statements...</option>
-                      <option v-for='option  in options'
-                              :value='option'
-                              :key='option'>
-                          {{ option }}
-                      </option>
-                  </select>
-                </form>
-            </div>
-            <div class='stmt_button'
-                 style='display:inline-block; 
-                        vertical-align: middle;'>
-                <button
-                    type='button'
-                    class='btn btn-default btn-submit pull-right'
-                    style='padding: 2px 6px'
-                    v-on:click='getStmts'>Submit
-                </button>
-            </div>
-            <div v-if='stmts'>
-                <h1>Statement Results</h1>
-                <stmt-display :stmts='stmts'/>
-            </div>
-        </div>
-        `,
-    data: function () {
-        return {
-            stmts: null,
-            name: '',
-            options: null
-        }
-    },
-    created: function () {
-        this.getOptions()
-    },
-    methods: {
-        getStmts: async function() {
-            const resp = await fetch(`${JSON_ADDR}${this.name}`, {method: 'GET'});
-            console.log("getStmts response status: " + resp.status);
-            const data = await resp.json();
-            this.stmts = data;
-            return;
-        },
-
-        getOptions: async function() {
-            const resp = await fetch(`${LIST_ADDR}`, {method: 'GET'});
-            console.log("getOptions response status: " + resp.status);
-            const data = await resp.json();
-            this.options = data;
-            return;
-        }
-    }
-})
-
 Vue.component('evidence', {
     template: `
         <div class='container evidence'>
@@ -389,6 +326,69 @@ Vue.component('stmt-display', {
         },
     },
     methods: {
+    }
+})
+
+Vue.component('interface', {
+    template: `
+        <div class='interface'>
+            <div class='form' 
+                 style='display:inline-block; 
+                        vertical-align: middle; 
+                        top: 0px'>
+                <form name='user_feedback_form'>
+                  <select v-model='name'>
+                      <option value='' selected disabled hidden>Select a collection of Statements...</option>
+                      <option v-for='option  in options'
+                              :value='option'
+                              :key='option'>
+                          {{ option }}
+                      </option>
+                  </select>
+                </form>
+            </div>
+            <div class='stmt_button'
+                 style='display:inline-block; 
+                        vertical-align: middle;'>
+                <button
+                    type='button'
+                    class='btn btn-default btn-submit pull-right'
+                    style='padding: 2px 6px'
+                    v-on:click='getStmts'>Submit
+                </button>
+            </div>
+            <div v-if='stmts'>
+                <h1>Statement Results</h1>
+                <stmt-display :stmts='stmts'/>
+            </div>
+        </div>
+        `,
+    data: function () {
+        return {
+            stmts: null,
+            name: '',
+            options: null
+        }
+    },
+    created: function () {
+        this.getOptions()
+    },
+    methods: {
+        getStmts: async function() {
+            const resp = await fetch(`${JSON_ADDR}${this.name}`, {method: 'GET'});
+            console.log("getStmts response status: " + resp.status);
+            const data = await resp.json();
+            this.stmts = data;
+            return;
+        },
+
+        getOptions: async function() {
+            const resp = await fetch(`${LIST_ADDR}`, {method: 'GET'});
+            console.log("getOptions response status: " + resp.status);
+            const data = await resp.json();
+            this.options = data;
+            return;
+        }
     }
 })
 
