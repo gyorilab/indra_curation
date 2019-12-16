@@ -358,7 +358,8 @@ Vue.component('interface', {
                     type='button'
                     class='btn btn-default btn-submit pull-right'
                     style='padding: 2px 6px'
-                    v-on:click='getStmts'>Submit
+                    v-on:click='getStmts'>
+                  Load
                 </button>
             </div>
             <div v-if='stmts'>
