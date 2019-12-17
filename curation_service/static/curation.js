@@ -304,7 +304,7 @@ Vue.component('evidence', {
           <div class='row'>
             <div class='col-1'>
               <div class='row'>
-                <div class='col-3 nvp curation_toggle text-center'
+                <div class='col-3 nvp clickable text-center'
                      :class="{ 'has-curation-badge': num_curations }"
                      v-on:click='toggleCuration'
                      :title='num_curations'>
@@ -360,8 +360,33 @@ var expanderMixin = {
     methods: {
         toggleList: function() {
             this.show_list = !this.show_list;
+        },
+    }
+}
+
+var pieceMealMixin = {
+    data: function() {
+        return {
+            end_n: 10,
+            dn: 10,
+        }
+    },
+    computed: {
+        list_shown: function() {
+            if (!this.base_list)
+                return;
+            return this.base_list.slice(0, this.end_n);
+        },
+        next_batch: function() {
+            return Math.min(this.base_list.length - this.end_n, this.dn);
+        }
+    },
+    methods: {
+        loadMore: function() {
+            this.end_n += this.dn;
         }
     }
+
 }
 
 Vue.component('ev-group', {
@@ -372,9 +397,12 @@ Vue.component('ev-group', {
             <small class='badge badge-secondary badge-pill'>{{ evidence.length }}</small>
           </h4>
           <div class='ev-list' v-show='show_list'>
-            <div v-for='ev in evidence'
+            <div v-for='ev in list_shown'
                  :key='ev.source_hash'>
               <evidence v-bind='ev' :stmt_hash='hash'/>
+            </div>
+            <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+              Load {{ next_batch }} more...
             </div>
           </div>
         </div>
@@ -384,7 +412,12 @@ Vue.component('ev-group', {
         english: String,
         hash: String
     },
-    mixins: [expanderMixin]
+    computed: {
+        base_list: function() {
+            return this.evidence;
+        }
+    },
+    mixins: [expanderMixin, pieceMealMixin]
 })
 
 
@@ -397,9 +430,12 @@ Vue.component('mid-group', {
               v-on:click='toggleList'>
           </h4>
           <div class='mid-list' v-show='stmt_info_list.length <= 1 || show_list'>
-            <div v-for='stmt in stmt_info_list' class='stmt-row'
+            <div v-for='stmt in list_shown' class='stmt-row'
                  :key='stmt.hash'>
               <ev-group v-bind='stmt'/>
+            </div>
+            <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+              Load {{ next_batch }} more...
             </div>
           </div>
         </div>
@@ -409,7 +445,12 @@ Vue.component('mid-group', {
         short_name: String,
         short_name_key: String,
     },
-    mixins: [expanderMixin]
+    computed: {
+        base_list: function () {
+            return this.stmt_info_list;
+        }
+    },
+    mixins: [expanderMixin, pieceMealMixin]
 })
 
 Vue.component('top-group', {
@@ -421,9 +462,12 @@ Vue.component('top-group', {
               v-on:click='toggleList'>
           </h4>
           <div class='top-list' v-show='stmts_formatted.length <= 1 || show_list'>
-            <div v-for='mid_group in stmts_formatted'
+            <div v-for='mid_group in list_shown'
                  class='stmt-group-row' :key='mid_group.short_name_key'>
                <mid-group v-bind='mid_group'/>
+            </div>
+            <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+              Load {{ next_batch }} more...
             </div>
           </div>
         </div>
@@ -432,7 +476,12 @@ Vue.component('top-group', {
         stmts_formatted: Array,
         label: String,
     },
-    mixins: [expanderMixin]
+    computed: {
+        base_list: function () {
+            return this.stmts_formatted;
+        }
+    },
+    mixins: [expanderMixin, pieceMealMixin]
 })
 
 Vue.component('stmt-display', {
@@ -441,20 +490,19 @@ Vue.component('stmt-display', {
           <div class='header-row'>
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
-          <div v-for='top_group in stmts' class='top-group-row' :key='top_group.html_key'>
+          <div v-for='top_group in list_shown' class='top-group-row' :key='top_group.html_key'>
             <top-group v-bind='top_group'/>
           </div>
+          <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+            Load {{ next_batch }} more...
           </div>
         </div>
-
-        `,
+      </div>
+      `,
     props: {
         stmts: Array,
         metadata: Object,
         source_key_dict: Object,
-    },
-    data: function () {
-        return {}
     },
     computed: {
         metadata_display: function () {
@@ -466,9 +514,11 @@ Vue.component('stmt-display', {
             }
             return ret;
         },
+        base_list: function () {
+            return this.stmts;
+        }
     },
-    methods: {
-    }
+    mixins: [pieceMealMixin]
 })
 
 Vue.component('interface', {
