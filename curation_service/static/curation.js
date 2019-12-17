@@ -51,11 +51,7 @@ Vue.component('curation-row', {
                           vertical-align: middle;'>
                 <a class='submission_status'></a>
               </div>
-              <div v-if='data_entered'>
-                error_type: {{ error_type }}<br>
-                comment: {{ comment }}
-              </div>
-              <div v-if='message'>
+              <div v-show='message'>
                 message: {{ message }}
               </div>
               <div v-if='previous'>
@@ -85,21 +81,21 @@ Vue.component('curation-row', {
     },
     data: function() {
         return {
-        comment: '',
+            comment: '',
             error_type: '',
-        options: {
-        correct: 'Correct',
-        entity_boundaries: 'Entity Boundaries',
-                grounding: 'Grounding',
-                no_relation: 'No Relation',
-                wrong_relation: 'Wrong Relation',
-                act_vs_amt: 'Activity vs. Amount',
-                polarity: 'Polarity',
-                negative_result: 'Negative Result',
-                hypothesis: 'Hypothesis',
-                agent_conditions: 'Agent Conditions',
-                mod_site: 'Modification Site',
-                other: 'Other...'
+            options: {
+              correct: 'Correct',
+              entity_boundaries: 'Entity Boundaries',
+              grounding: 'Grounding',
+              no_relation: 'No Relation',
+              wrong_relation: 'Wrong Relation',
+              act_vs_amt: 'Activity vs. Amount',
+              polarity: 'Polarity',
+              negative_result: 'Negative Result',
+              hypothesis: 'Hypothesis',
+              agent_conditions: 'Agent Conditions',
+              mod_site: 'Modification Site',
+              other: 'Other...'
             },
             submitting: false,
             message: "",
@@ -161,7 +157,6 @@ Vue.component('curation-row', {
                     this.message = "Curation successful!";
                     this.clear();
                     this.icon.style = "color: #00FF00";
-                    this.previous = [...this.previous, cur_dict];
                     break;
                 case 400:
                     this.message = resp.status + ": Bad Curation Data";
