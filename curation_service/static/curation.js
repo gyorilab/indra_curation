@@ -194,46 +194,6 @@ Vue.component('curation-row', {
     }
 })
 
-function pmidXML2dict(XML) {
-  let xml_dict = {};
-  for (let child of XML.children) {
-    let name = child.getAttribute("Name");
-    let type = child.getAttribute("Type");
-    if (child.hasChildNodes() && type === "List") {
-      let innerItems;
-      // Javascript can't really do nice recursive functions...
-      // special cases for "History" and "ArticleIds" which has unique inner Names
-      if (name === "ArticleIds" || name === "History") {
-        let innerDict = {};
-        for (c of child.children) {
-          innerDict[c.getAttribute("Name")] = c.textContent;
-        }
-        innerItems = innerDict;
-      } else {
-        let innerList = [];
-        for (c of child.children) {
-          innerList.push(c.textContent);
-        }
-        innerItems = innerList;
-      }
-      xml_dict[name] = innerItems
-    } else if (child.tagName === "Item") {
-      // Here just get the inner strings
-      xml_dict[name] = child.textContent;
-    } else if (child.tagName === "Id") {
-      // Special case
-      xml_dict["Id"] = child.textContent;
-    } else {
-      if (!xml_dict["no_key"]) {
-        xml_dict["no_key"] = [child.textContent]
-      } else {
-        xml_dict["no_key"].push(child.textContent)
-      }
-    }
-  }
-  return xml_dict;
-}
-
 Vue.component('ref-link', {
     template: `
         <span v-if='href_url'>
@@ -278,41 +238,60 @@ Vue.component('ref-link', {
 
         ref_id: function () {
             return this.text_refs[this.ref_name.toUpperCase()];
+        },
+
+        title_text: function () {
+            if (this.article_title)
+                return this.article_title;
+            else
+                return "Hover to see info.";
         }
     },
     data: function () {
         return {
-            title_text: "Hover to see info."
+            article_title: null 
         }
     },
     methods: {
         getLinkTitle: async function () {
-            const entrez_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi'
+            if (this.article_title)
+                return;
+
+            const entrez_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi';
             this.title_text = "Loading...";
             switch (this.ref_name.toUpperCase()) {
                 case 'PMID':
-                    const resp = await fetch(`?id=${this.ref_id}&retmode=xml&rettype=docsum&db=pubmed`, {
-                        method: 'POST',
-                    });
-                    console.log(resp);
-                    this.title_text = "This should be a title."
-                    const text = await resp.text();
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(text, 'application/xml');
-                    const docsum_xml = xml.getElementsByTagName('DocSum')[0];
-                    const pmd = pmidXML2dict(docsum_xml); 
-                    const nAuthors = pmd.AuthorList.length;
-                    let authorsStr;
-                    if (nAuthors > 3)
-                      authorsStr = `${pmd.AuthorList[0]}, ... ${pmd.AuthorList[nAuthors - 1]}`;
-                    else
-                      authorsStr = pmd.AuthorList.join(", ");
-                    this.title_text = `${authorsStr}, "${pmd.Title}", ${pmd.Source}, ${pmd.SO}`;
+                    id = this.ref_id;
+                    db = 'pubmed';
+                    break;
+                case 'PMCID':
+                    id = this.ref_id.slice(3,);
+                    db = 'pmc';
                     break;
                 default:
-                    this.title_text = "This should be a title.";
-                    break;
+                    this.article_title = `Cannot retrieve titles for ${this.ref_name}'s.`;
+                    return;
             }
+            let url = `${entrez_url}?id=${id}&retmode=json&db=${db}`
+            console.log(url);
+            const resp = await fetch(url, {method: 'POST'});
+            console.log(resp);
+            const data = await resp.json();
+            const pmd = data.result[id];
+            let authorsStr = '';
+            let n = 0; 
+            for (let author of pmd.authors) {
+                if (n > 2) {
+                    authorsStr += ', ...';
+                    break;
+                }
+                authorsStr += author.name;
+                if (n < pmd.authors.length) {
+                    authorsStr += ', ';
+                }
+                n += 1;
+            }
+            this.article_title = `${authorsStr}, "${pmd.title}", ${pmd.source}, ${pmd.pubdate}`;
         }
     }
 })
