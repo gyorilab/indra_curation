@@ -121,7 +121,7 @@ def get_json_content(name):
 
     logger.info(f"Attempting to load JSON for {name}")
 
-    regenerate = request.args.get('regen', False)
+    regenerate = request.args.get('regen', 'false') == 'true'
     if regenerate:
         logger.info(f"Will regenerate JSON for {name}")
 
