@@ -1,6 +1,6 @@
 Vue.component('curation-row', {
     template: `
-        <div class='container' v-if='open'>
+        <div class='container' v-show='open'>
           <div class='row cchild' style='border-top: 1px solid #FFFFFF;'>
             <div class='col' style='padding: 0px; border-top: 1px solid #FFFFFF;'>
               <select v-model='error_type'>
@@ -60,13 +60,19 @@ Vue.component('curation-row', {
               </div>
               <div v-if='previous'>
                 <h5>Prior Curations</h5>
-                <div v-for='entry in previous'>
-                   <hr>
-                   error_type: {{ entry.error_type }}<br>
-                   source_api: {{ entry.source }}<br>
-                   date: {{ entry.date }}<br>
-                   email: {{ entry.email }}<br>
-                   comment: {{ entry.comment }}<br>
+                <div v-for='entry in previous' class='row'>
+                   <div class='col-3'>
+                     {{ entry.date }}
+                   </div>
+                   <div v-for='attr in ["email", "error_type", "comment", "source"]'
+                        class='col'>
+                     <span v-if='entry[attr]'>
+                       {{ entry[attr] }}
+                     </span>
+                     <span v-else>
+                       <i>No {{ attr }} given.</i>
+                     </span>
+                   </div>
                 </div>
               </div>
             </div>
