@@ -351,16 +351,31 @@ Vue.component('evidence', {
     }
 })
 
+var expanderMixin = {
+    data: function () {
+        return {
+            show_list: false,
+        }
+    },
+    methods: {
+        toggleList: function() {
+            this.show_list = !this.show_list;
+        }
+    }
+}
+
 Vue.component('ev-group', {
     template: `
         <div class='ev-group'>
-          <h4>
-              <span v-html='english'></span>
-              <small class='badge badge-secondary badge-pill'>{{ evidence.length }}</small>
+          <h4 v-on:click='toggleList'>
+            <span v-html='english'></span>
+            <small class='badge badge-secondary badge-pill'>{{ evidence.length }}</small>
           </h4>
-          <div v-for='ev in evidence'
-               :key='ev.source_hash'>
-            <evidence v-bind='ev' :stmt_hash='hash'/>
+          <div class='ev-list' v-show='show_list'>
+            <div v-for='ev in evidence'
+                 :key='ev.source_hash'>
+              <evidence v-bind='ev' :stmt_hash='hash'/>
+            </div>
           </div>
         </div>
         `,
@@ -368,18 +383,24 @@ Vue.component('ev-group', {
         evidence: Array,
         english: String,
         hash: String
-    }
+    },
+    mixins: [expanderMixin]
 })
 
 
 Vue.component('mid-group', {
     template: `
-        <div class='mid-group'>
-          <h3 v-if='stmt_info_list.length > 1'
-              v-html='short_name'></h3>
-          <div v-for='stmt in stmt_info_list' class='stmt-row'
-               :key='stmt.hash'>
-            <ev-group v-bind='stmt'/>
+        <div class='mid-group' >
+          <h4 v-if='stmt_info_list.length > 1'
+              :class='{faded: show_list}'
+              v-html='short_name'
+              v-on:click='toggleList'>
+          </h4>
+          <div class='mid-list' v-show='stmt_info_list.length <= 1 || show_list'>
+            <div v-for='stmt in stmt_info_list' class='stmt-row'
+                 :key='stmt.hash'>
+              <ev-group v-bind='stmt'/>
+            </div>
           </div>
         </div>
         `,
@@ -388,16 +409,22 @@ Vue.component('mid-group', {
         short_name: String,
         short_name_key: String,
     },
+    mixins: [expanderMixin]
 })
 
 Vue.component('top-group', {
     template: `
         <div class='top-group'>
-          <h2 v-if='stmts_formatted.length > 1'
-              v-html='label'></h2>
-          <div v-for='mid_group in stmts_formatted'
-               class='stmt-group-row' :key='mid_group.short_name_key'>
-             <mid-group v-bind='mid_group'/>
+          <h4 v-if='stmts_formatted.length > 1'
+              :class='{faded: show_list}'
+              v-html='label'
+              v-on:click='toggleList'>
+          </h4>
+          <div class='top-list' v-show='stmts_formatted.length <= 1 || show_list'>
+            <div v-for='mid_group in stmts_formatted'
+                 class='stmt-group-row' :key='mid_group.short_name_key'>
+               <mid-group v-bind='mid_group'/>
+            </div>
           </div>
         </div>
         `,
@@ -405,6 +432,7 @@ Vue.component('top-group', {
         stmts_formatted: Array,
         label: String,
     },
+    mixins: [expanderMixin]
 })
 
 Vue.component('stmt-display', {
