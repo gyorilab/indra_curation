@@ -351,6 +351,62 @@ Vue.component('evidence', {
     }
 })
 
+Vue.component('ev-group', {
+    template: `
+        <div class='ev-group'>
+          <h4>
+              <span v-html='english'></span>
+              <small class='badge badge-secondary badge-pill'>{{ evidence.length }}</small>
+          </h4>
+          <div v-for='ev in evidence'
+               :key='ev.source_hash'>
+            <evidence v-bind='ev' :stmt_hash='hash'/>
+          </div>
+        </div>
+        `,
+    props: {
+        evidence: Array,
+        english: String,
+        hash: String
+    }
+})
+
+
+Vue.component('mid-group', {
+    template: `
+        <div class='mid-group'>
+          <h3 v-if='stmt_info_list.length > 1'
+              v-html='short_name'></h3>
+          <div v-for='stmt in stmt_info_list' class='stmt-row'
+               :key='stmt.hash'>
+            <ev-group v-bind='stmt'/>
+          </div>
+        </div>
+        `,
+    props: {
+        stmt_info_list: Array,
+        short_name: String,
+        short_name_key: String,
+    },
+})
+
+Vue.component('top-group', {
+    template: `
+        <div class='top-group'>
+          <h2 v-if='stmts_formatted.length > 1'
+              v-html='label'></h2>
+          <div v-for='mid_group in stmts_formatted'
+               class='stmt-group-row' :key='mid_group.short_name_key'>
+             <mid-group v-bind='mid_group'/>
+          </div>
+        </div>
+        `,
+    props: {
+        stmts_formatted: Array,
+        label: String,
+    },
+})
+
 Vue.component('stmt-display', {
     template: `
         <div class='stmts'>
@@ -358,24 +414,7 @@ Vue.component('stmt-display', {
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
           <div v-for='top_group in stmts' class='top-group-row' :key='top_group.html_key'>
-            <h2 v-if='top_group.stmts_formatted.length > 1'
-                v-html='top_group.label'></h2>
-            <div v-for='mid_group in top_group.stmts_formatted'
-                 class='stmt-group-row' :key='mid_group.short_name_key'>
-              <h3 v-if='mid_group.stmt_info_list.length > 1'
-                  v-html='mid_group.short_name'></h3>
-              <div v-for='stmt in mid_group.stmt_info_list' class='stmt-row'
-                   :key='mid_group.short_name_key + stmt.hash'>
-                <h4>
-                    <span v-html='stmt.english'></span>
-                    <small class='badge badge-secondary badge-pill'>{{ stmt.evidence.length }}</small>
-                </h4>
-                <div v-for='ev in stmt.evidence'
-                     :key='mid_group.short_name_key + stmt.hash + ev.source_hash'>
-                  <evidence v-bind='ev' :stmt_hash='stmt.hash'/>
-                </div>
-              </div>
-            </div>
+            <top-group v-bind='top_group'/>
           </div>
           </div>
         </div>
