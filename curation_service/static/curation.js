@@ -194,6 +194,64 @@ Vue.component('curation-row', {
     }
 })
 
+Vue.component('ref-link', {
+    template: `
+        <span v-if='href_url'>
+          <a class='id_link'
+             :title="title_text"
+             v-on:mouseover="getLinkTitle"
+             :href='href_url'
+             target="_blank">
+           {{ ref_id }}
+          </a>
+        </span>
+        <span v-else>
+          {{ ref_id }}
+        </span>
+        `,
+    props: {
+        ref_name: String,
+        text_refs: Object,
+    },
+    computed: {
+        href_url: function() {
+            if (!this.ref_id)
+                return "";
+
+            var link;
+            switch (this.ref_name.toUpperCase()) {
+                case 'PMID':
+                    link = "https://www.ncbi.nlm.nih.gov/pubmed/" + this.ref_id;
+                    break;
+                case 'PMCID':
+                    link = "https://www.ncbi.nlm.nih.gov/pmc/articles/" + this.ref_id;
+                    break;
+                case 'DOI':
+                    link = "https://dx.doi.org/" + this.ref_id;
+                    break;
+                default:
+                    link = "";
+                    break;
+            }
+            return link;
+        },
+
+        ref_id: function () {
+            return this.text_refs[this.ref_name.toUpperCase()];
+        }
+    },
+    data: function () {
+        return {
+            title_text: "Hover to see info."
+        }
+    },
+    methods: {
+        getLinkTitle: async function () {
+            this.title_text = "This should be a title."
+        }
+    }
+})
+
 Vue.component('evidence', {
     template: `
         <div class='container evidence'>
@@ -213,7 +271,11 @@ Vue.component('evidence', {
               </div>
             </div>
             <div class='col-10' v-html='text'></div>
-            <div class='col-1 text-right'>{{ pmid }}</div>
+            <div class='col-1 text-right'>
+              <ref-link ref_name='pmid' :text_refs='text_refs'/>
+              <ref-link ref_name='pmcid' :text_refs='text_refs'/>
+              <ref-link ref_name='doi' :text_refs='text_refs'/>
+            </div>
           </div>
           <div class='row'>
             <div class='col'>
