@@ -399,15 +399,15 @@ var pieceMealMixin = {
 Vue.component('ev-group', {
     template: `
         <div class='ev-group'>
-          <h4 v-on:click='toggleList'>
+          <h4 v-on:click='toggleList' class='clickable'>
             <span v-html='english'></span>
             <small class='badge badge-secondary badge-pill'>{{ evidence.length }}</small>
           </h4>
           <div class='ev-list' v-show='show_list'>
-            <div v-for='ev in list_shown'
-                 :key='ev.source_hash'>
-              <evidence v-bind='ev' :stmt_hash='hash'/>
-            </div>
+            <evidence v-for='ev in list_shown'
+                      :key='ev.source_hash'
+                      v-bind='ev'
+                      :stmt_hash='hash'/>
             <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
               Load {{ next_batch }} more...
             </div>
@@ -436,14 +436,15 @@ Vue.component('mid-group', {
         <div class='mid-group' >
           <h4 v-if='stmt_info_list.length > 1'
               :class='{faded: show_list}'
+              class='clickable'
               v-html='short_name'
               v-on:click='toggleList'>
           </h4>
           <div class='mid-list' v-show='stmt_info_list.length <= 1 || show_list'>
-            <div v-for='stmt in list_shown' class='stmt-row'
-                 :key='stmt.hash'>
-              <ev-group v-bind='stmt'/>
-            </div>
+            <ev-group v-for='stmt in list_shown'
+                      class='stmt-row'
+                      :key='stmt.hash'
+                      v-bind='stmt'/>
             <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
               Load {{ next_batch }} more...
             </div>
@@ -471,14 +472,15 @@ Vue.component('top-group', {
         <div class='top-group'>
           <h4 v-if='stmts_formatted.length > 1'
               :class='{faded: show_list}'
+              class='clickable'
               v-html='label'
               v-on:click='toggleList'>
           </h4>
           <div class='top-list' v-show='stmts_formatted.length <= 1 || show_list'>
-            <div v-for='mid_group in list_shown'
-                 class='stmt-group-row' :key='mid_group.short_name_key'>
-               <mid-group v-bind='mid_group'/>
-            </div>
+            <mid-group v-for='mid_group in list_shown'
+                       class='stmt-group-row'
+                       :key='mid_group.short_name_key'
+                       v-bind='mid_group'/>
             <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
               Load {{ next_batch }} more...
             </div>
@@ -506,9 +508,10 @@ Vue.component('stmt-display', {
           <div class='header-row'>
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
-          <div v-for='top_group in list_shown' class='top-group-row' :key='top_group.html_key'>
-            <top-group v-bind='top_group'/>
-          </div>
+          <top-group v-for='top_group in list_shown'
+                     class='top-group-row'
+                     :key='top_group.html_key'
+                     v-bind='top_group'/>
           <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
             Load {{ next_batch }} more...
           </div>
