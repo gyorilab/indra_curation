@@ -440,9 +440,8 @@ Vue.component('mid-group', {
               v-html='short_name'
               v-on:click='toggleList'>
           </h4>
-          <div class='mid-list' v-show='stmt_info_list.length <= 1 || show_list'>
+          <div class='mid-list indented' v-show='stmt_info_list.length <= 1 || show_list'>
             <ev-group v-for='stmt in list_shown'
-                      class='stmt-row'
                       :key='stmt.hash'
                       v-bind='stmt'/>
             <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
@@ -476,9 +475,8 @@ Vue.component('top-group', {
               v-html='label'
               v-on:click='toggleList'>
           </h4>
-          <div class='top-list' v-show='stmts_formatted.length <= 1 || show_list'>
+          <div class='top-list' :class='{ indented: stmts_formatted.length <= 1 }' v-show='stmts_formatted.length <= 1 || show_list'>
             <mid-group v-for='mid_group in list_shown'
-                       class='stmt-group-row'
                        :key='mid_group.short_name_key'
                        v-bind='mid_group'/>
             <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
@@ -509,7 +507,6 @@ Vue.component('stmt-display', {
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
           <top-group v-for='top_group in list_shown'
-                     class='top-group-row'
                      :key='top_group.html_key'
                      v-bind='top_group'/>
           <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
