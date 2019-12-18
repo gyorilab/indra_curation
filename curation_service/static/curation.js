@@ -379,11 +379,18 @@ var pieceMealMixin = {
         },
         next_batch: function() {
             return Math.min(this.base_list.length - this.end_n, this.dn);
+        },
+        show_buttons: function() {
+            return this.next_batch > 0;
         }
     },
     methods: {
         loadMore: function() {
             this.end_n += this.dn;
+        },
+
+        loadAll: function() {
+            this.end_n = this.base_list.length;
         }
     }
 
@@ -401,8 +408,11 @@ Vue.component('ev-group', {
                  :key='ev.source_hash'>
               <evidence v-bind='ev' :stmt_hash='hash'/>
             </div>
-            <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
               Load {{ next_batch }} more...
+            </div>
+            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+              Load all...
             </div>
           </div>
         </div>
@@ -434,8 +444,11 @@ Vue.component('mid-group', {
                  :key='stmt.hash'>
               <ev-group v-bind='stmt'/>
             </div>
-            <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
               Load {{ next_batch }} more...
+            </div>
+            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+              Load all...
             </div>
           </div>
         </div>
@@ -466,8 +479,11 @@ Vue.component('top-group', {
                  class='stmt-group-row' :key='mid_group.short_name_key'>
                <mid-group v-bind='mid_group'/>
             </div>
-            <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
               Load {{ next_batch }} more...
+            </div>
+            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+              Load all...
             </div>
           </div>
         </div>
@@ -493,8 +509,11 @@ Vue.component('stmt-display', {
           <div v-for='top_group in list_shown' class='top-group-row' :key='top_group.html_key'>
             <top-group v-bind='top_group'/>
           </div>
-          <div class='text-center clickable' v-show='next_batch >= 0' v-on:click='loadMore'>
+          <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
             Load {{ next_batch }} more...
+          </div>
+          <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+            Load all...
           </div>
         </div>
       </div>
