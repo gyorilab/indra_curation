@@ -401,17 +401,23 @@ Vue.component('ev-group', {
         <div class='ev-group'>
           <h4 v-on:click='toggleList' class='clickable'>
             <span v-html='english'></span>
-            <small class='badge badge-secondary badge-pill'>{{ evidence.length }}</small>
+            <small class='badge badge-secondary badge-pill'>
+              {{ evidence.length }}
+            </small>
           </h4>
           <div class='ev-list' v-show='show_list'>
             <evidence v-for='ev in list_shown'
                       :key='ev.source_hash'
                       v-bind='ev'
                       :stmt_hash='hash'/>
-            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
+            <div class='text-center clickable'
+                 v-show='show_buttons'
+                 v-on:click='loadMore'>
               Load {{ next_batch }} more...
             </div>
-            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+            <div class='text-center clickable'
+                 v-show='show_buttons'
+                 v-on:click='loadAll'>
               Load all...
             </div>
           </div>
@@ -440,14 +446,20 @@ Vue.component('mid-group', {
               v-html='short_name'
               v-on:click='toggleList'>
           </h4>
-          <div class='mid-list indented' v-show='stmt_info_list.length <= 1 || show_list'>
+          <div class='mid-list'
+               :class='{ indented: stmt_info_list.length > 1 }'
+               v-show='stmt_info_list.length <= 1 || show_list'>
             <ev-group v-for='stmt in list_shown'
                       :key='stmt.hash'
                       v-bind='stmt'/>
-            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
+            <div class='text-center clickable'
+                 v-show='show_buttons'
+                 v-on:click='loadMore'>
               Load {{ next_batch }} more...
             </div>
-            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+            <div class='text-center clickable'
+                 v-show='show_buttons'
+                 v-on:click='loadAll'>
               Load all...
             </div>
           </div>
@@ -475,14 +487,20 @@ Vue.component('top-group', {
               v-html='label'
               v-on:click='toggleList'>
           </h4>
-          <div class='top-list' :class='{ indented: stmts_formatted.length <= 1 }' v-show='stmts_formatted.length <= 1 || show_list'>
+          <div class='top-list'
+               :class='{ indented: stmts_formatted.length > 1 }'
+               v-show='stmts_formatted.length <= 1 || show_list'>
             <mid-group v-for='mid_group in list_shown'
                        :key='mid_group.short_name_key'
                        v-bind='mid_group'/>
-            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
+            <div class='text-center clickable'
+                 v-show='show_buttons'
+                 v-on:click='loadMore'>
               Load {{ next_batch }} more...
             </div>
-            <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+            <div class='text-center clickable'
+                 v-show='show_buttons'
+                 v-on:click='loadAll'>
               Load all...
             </div>
           </div>
@@ -495,7 +513,7 @@ Vue.component('top-group', {
     computed: {
         base_list: function () {
             return this.stmts_formatted;
-        }
+        },
     },
     mixins: [expanderMixin, pieceMealMixin]
 })
@@ -509,10 +527,14 @@ Vue.component('stmt-display', {
           <top-group v-for='top_group in list_shown'
                      :key='top_group.html_key'
                      v-bind='top_group'/>
-          <div class='text-center clickable' v-show='show_buttons' v-on:click='loadMore'>
+          <div class='text-center clickable'
+               v-show='show_buttons'
+               v-on:click='loadMore'>
             Load {{ next_batch }} more...
           </div>
-          <div class='text-center clickable' v-show='show_buttons' v-on:click='loadAll'>
+          <div class='text-center clickable'
+               v-show='show_buttons'
+               v-on:click='loadAll'>
             Load all...
           </div>
         </div>
@@ -549,7 +571,9 @@ Vue.component('interface', {
                         top: 0px'>
                 <form name='user_feedback_form'>
                   <select v-model='name'>
-                      <option value='' selected disabled hidden>Select a collection of Statements...</option>
+                      <option value='' selected disabled hidden>
+                        Select a collection of Statements...
+                      </option>
                       <option v-for='option  in options'
                               :value='option'
                               :key='option'>
