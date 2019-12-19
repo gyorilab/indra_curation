@@ -455,8 +455,11 @@ Vue.component('mid-group', {
           <h4 v-if='stmt_info_list.length > 1'
               :class='{faded: show_list}'
               class='clickable'
-              v-html='short_name'
               v-on:click='toggleList'>
+            <span v-html='short_name'></span>
+            <small class='badge badge-secondary badge-pill'>
+              +
+            </small>
           </h4>
           <div class='mid-list'
                :class='{ indented: stmt_info_list.length > 1 }'
@@ -496,8 +499,11 @@ Vue.component('top-group', {
           <h4 v-if='stmts_formatted.length > 1'
               :class='{faded: show_list}'
               class='clickable'
-              v-html='label'
               v-on:click='toggleList'>
+            <span v-html='label'></span>
+            <small class='badge badge-secondary badge-pill'>
+              ++
+            </small>
           </h4>
           <div class='top-list'
                :class='{ indented: stmts_formatted.length > 1 }'
