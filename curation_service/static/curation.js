@@ -439,7 +439,7 @@ Vue.component('ev-group', {
 
         total_curations: function() {
             var total_curations = 0;
-            for (var ev in this.evidence) {
+            for (var ev in this.evidence.slice(0, this.end_n)) {
                 total_curations += this.evidence[ev].num_curations > 0;
             }
             return total_curations;
