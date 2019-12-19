@@ -404,6 +404,10 @@ Vue.component('ev-group', {
             <small class='badge badge-secondary badge-pill'>
               {{ evidence.length }}
             </small>
+            <small v-if='total_curations'
+                   class='badge badge-success badge-pill'>
+               &#9998; {{ total_curations }}
+            </small>
           </h4>
           <div class='ev-list' v-show='show_list'>
             <evidence v-for='ev in list_shown'
@@ -431,6 +435,14 @@ Vue.component('ev-group', {
     computed: {
         base_list: function() {
             return this.evidence;
+        },
+
+        total_curations: function() {
+            var total_curations = 0;
+            for (var ev in this.evidence) {
+                total_curations += this.evidence[ev].num_curations > 0;
+            }
+            return total_curations;
         }
     },
     mixins: [expanderMixin, pieceMealMixin]
