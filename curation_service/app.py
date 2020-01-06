@@ -158,7 +158,7 @@ def get_json_content(name):
     html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
                                    db_rest_url=request.url_root[:-1],
                                    curation_dict=CURATIONS['cache'])
-    ordered_dict = html_assembler.make_json_model()
+    ordered_dict = html_assembler.make_json_model(with_grouping=False)
     result = []
     for key, group_dict in ordered_dict.items():
         group_dict['key'] = key

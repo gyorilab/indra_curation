@@ -317,9 +317,9 @@ Vue.component('evidence', {
             </div>
             <div class='col-10' v-html='text'></div>
             <div class='col-1 text-right'>
-              <ref-link ref_name='pmid' :text_refs='text_refs'/>
-              <ref-link ref_name='pmcid' :text_refs='text_refs'/>
-              <ref-link ref_name='doi' :text_refs='text_refs'/>
+              <ref-link v-if="'PMID' in text_refs" ref_name='pmid' :text_refs='text_refs'/>
+              <ref-link v-else-if="'PMCID' in text_refs" ref_name='pmcid' :text_refs='text_refs'/>
+              <ref-link v-else-if="'DOI' in text_refs" ref_name='doi' :text_refs='text_refs'/>
             </div>
           </div>
           <div class='row'>
@@ -620,7 +620,7 @@ Vue.component('interface', {
                       style='padding: 2px 6px'
                       title='Regnerate Results'
                       v-on:click='getStmts(true)'>
-                    &#x1f5d8;
+                    <img src='https://bigmech.s3.amazonaws.com/indra-db/reload.png' style='width: 1em; height: 1em'>
                   </button>
                 </h1>
                 <stmt-display :stmts='stmts'/>
