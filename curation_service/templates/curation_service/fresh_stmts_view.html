@@ -93,7 +93,18 @@
     <div id="curation-app">
       <interface/>
     </div>
+    <script src="{{  url_for('static', filename='mixins.js') }}"></script>
     <script src="{{  url_for('static', filename='curation.js') }}"></script>
+    <script src="{{  url_for('static', filename='evidence.js') }}"></script>
+    <script src="{{  url_for('static', filename='statement.js') }}"></script>
+    <script src="{{  url_for('static', filename='mid_group.js') }}"></script>
+    <script src="{{  url_for('static', filename='top_group.js') }}"></script>
+    <script src="{{  url_for('static', filename='stmt_display.js') }}"></script>
+    <script src="{{  url_for('static', filename='interface.js') }}"></script>
+    <script>
+      var app = new Vue({el:'#curation-app'})
+    </script>
+
   </div>
 </body>
 </html>
