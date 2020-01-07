@@ -149,7 +149,7 @@ def get_json_content(name):
     # If the file is HTML, just return it.
     if is_json:
         logger.info("Returning with cached JSON file.")
-        return jsonify(json.loads(raw_content))
+        return jsonify({'stmts': json.loads(raw_content), 'grouped': True})
 
     # Get the pickle file.
     stmts = pickle.loads(raw_content)
@@ -158,7 +158,7 @@ def get_json_content(name):
     html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
                                    db_rest_url=request.url_root[:-1],
                                    curation_dict=CURATIONS['cache'])
-    ordered_dict = html_assembler.make_json_model(with_grouping=False)
+    ordered_dict = html_assembler.make_json_model()
     result = []
     for key, group_dict in ordered_dict.items():
         group_dict['key'] = key
@@ -171,7 +171,7 @@ def get_json_content(name):
 
     # Return the result.
     logger.info("Returning with newly generated JSON file.")
-    return jsonify(result)
+    return jsonify({'stmts': result, 'grouped': True})
 
 
 @app.route('/curations/submit', methods=['POST'])

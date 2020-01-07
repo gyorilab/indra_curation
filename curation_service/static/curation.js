@@ -396,9 +396,9 @@ var pieceMealMixin = {
 
 }
 
-Vue.component('ev-group', {
+Vue.component('statement', {
     template: `
-        <div class='ev-group'>
+        <div class='statement'>
           <h4 v-on:click='toggleList' class='clickable'>
             <span v-html='english'></span>
             <small class='badge badge-secondary badge-pill'>
@@ -464,7 +464,7 @@ Vue.component('mid-group', {
           <div class='mid-list'
                :class='{ indented: stmt_info_list.length > 1 }'
                v-show='stmt_info_list.length <= 1 || show_list'>
-            <ev-group v-for='stmt in list_shown'
+            <statement v-for='stmt in list_shown'
                       :key='stmt.hash'
                       v-bind='stmt'/>
             <div class='text-center clickable'
@@ -542,9 +542,16 @@ Vue.component('stmt-display', {
           <div class='header-row'>
             <h3 v-bind:title="metadata_display">Statements</h3>
           </div>
-          <top-group v-for='top_group in list_shown'
-                     :key='top_group.html_key'
-                     v-bind='top_group'/>
+          <div v-if='grouped'>
+            <top-group v-for='top_group in list_shown'
+                       :key='top_group.html_key'
+                       v-bind='top_group'/>
+          </div>
+          <div v-else>
+            <statement v-for='stmt in list_shown'
+                       :key='stmt.hash'
+                       v-bind='stmt'/>
+          </div>
           <div class='text-center clickable'
                v-show='show_buttons'
                v-on:click='loadMore'>
@@ -562,6 +569,7 @@ Vue.component('stmt-display', {
         stmts: Array,
         metadata: Object,
         source_key_dict: Object,
+        grouped: Boolean
     },
     computed: {
         metadata_display: function () {
@@ -623,7 +631,7 @@ Vue.component('interface', {
                     <img src='https://bigmech.s3.amazonaws.com/indra-db/reload.png' style='width: 1em; height: 1em'>
                   </button>
                 </h1>
-                <stmt-display :stmts='stmts'/>
+                <stmt-display :stmts='stmts' :grouped='grouped'/>
             </div>
         </div>
         `,
@@ -631,7 +639,8 @@ Vue.component('interface', {
         return {
             stmts: null,
             name: '',
-            options: null
+            options: null,
+            grouped: true
         }
     },
     created: function () {
@@ -642,7 +651,8 @@ Vue.component('interface', {
             const resp = await fetch(`${JSON_ADDR}${this.name}?regen=${regenerate}`, {method: 'GET'});
             console.log("getStmts response status: " + resp.status);
             const data = await resp.json();
-            this.stmts = data;
+            this.stmts = data.stmts;
+            this.grouped = data.grouped;
             return;
         },
 
