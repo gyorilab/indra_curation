@@ -648,7 +648,7 @@ Vue.component('interface', {
     },
     methods: {
         getStmts: async function(regenerate=false) {
-            const resp = await fetch(`${JSON_ADDR}${this.name}?regen=${regenerate}`, {method: 'GET'});
+            const resp = await fetch(`${JSON_ADDR}${this.name}?regen=${regenerate}&grouped=false`, {method: 'GET'});
             console.log("getStmts response status: " + resp.status);
             const data = await resp.json();
             this.stmts = data.stmts;

@@ -12,7 +12,8 @@ from flask import Flask, request, jsonify, url_for, abort, Response, \
 from jinja2 import Environment, ChoiceLoader
 
 from indra.assemblers.html import HtmlAssembler
-from indra.assemblers.html.assembler import loader as indra_loader
+from indra.assemblers.html.assembler import loader as indra_loader, \
+    _format_stmt_text, _format_evidence_text
 
 from indra_db import get_db
 from indra_db.client import submit_curation
@@ -125,6 +126,8 @@ def get_json_content(name):
     if regenerate:
         logger.info(f"Will regenerate JSON for {name}")
 
+    grouped = request.args.get('grouped', 'false') == 'true'
+
     # Select the correct file
     is_json = False
     file_path = None
@@ -149,20 +152,31 @@ def get_json_content(name):
     # If the file is HTML, just return it.
     if is_json:
         logger.info("Returning with cached JSON file.")
-        return jsonify({'stmts': json.loads(raw_content), 'grouped': True})
+        return jsonify(json.loads(raw_content))
 
     # Get the pickle file.
     stmts = pickle.loads(raw_content)
 
     # Build the HTML file
-    html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
-                                   db_rest_url=request.url_root[:-1],
-                                   curation_dict=CURATIONS['cache'])
-    ordered_dict = html_assembler.make_json_model()
-    result = []
-    for key, group_dict in ordered_dict.items():
-        group_dict['key'] = key
-        result.append(group_dict)
+    result = {'stmts': [], 'grouped': grouped}
+    if grouped:
+        html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
+                                       db_rest_url=request.url_root[:-1],
+                                       curation_dict=CURATIONS['cache'])
+        ordered_dict = html_assembler.make_json_model()
+        for key, group_dict in ordered_dict.items():
+            group_dict['key'] = key
+            result['stmts'].append(group_dict)
+    else:
+        for stmt in sorted(stmts, key=lambda s: len(s.evidence), reverse=True):
+            stmt_dict = {
+                'evidence': _format_evidence_text(stmt, CURATIONS['cache']),
+                'english': _format_stmt_text(stmt),
+                'evidence_count': len(stmt.evidence),
+                'hash': str(stmt.get_hash()),
+                'source_count': None
+            }
+            result['stmts'].append(stmt_dict)
 
     # Save the file to s3
     json_file_path = file_path.replace('.pkl', '.json')
@@ -171,7 +185,7 @@ def get_json_content(name):
 
     # Return the result.
     logger.info("Returning with newly generated JSON file.")
-    return jsonify({'stmts': result, 'grouped': True})
+    return jsonify(result)
 
 
 @app.route('/curations/submit', methods=['POST'])
