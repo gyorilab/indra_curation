@@ -47,7 +47,7 @@ slash is **NOT** assumed.
 You can now go to `localhost:5000/json` and select one of your pickle files
 from the dropdown menu to begin curating. The back-end service will generate
 and cache JSON, which can be forcefully reloaded by clicking the
-![](https://bigmech.s3.amazonaws.com/indra-db/reload.png =10x10) button.
+<img src="https://bigmech.s3.amazonaws.com/indra-db/reload.png" width=10 height=10> button.
 
 You can now begin exploring the statements and their evidence. To view prior
 curations, click the button next to a curation called "Load Previous".
