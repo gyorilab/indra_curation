@@ -168,7 +168,9 @@ def get_json_content(name):
             group_dict['key'] = key
             result['stmts'].append(group_dict)
     else:
-        for stmt in sorted(stmts, key=lambda s: len(s.evidence), reverse=True):
+        for stmt in sorted(stmts,
+                           key=lambda s: (len(s.evidence), s.get_hash()),
+                           reverse=True):
             stmt_dict = {
                 'evidence': _format_evidence_text(stmt, CURATIONS['cache']),
                 'english': _format_stmt_text(stmt),
