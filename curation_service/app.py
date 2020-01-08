@@ -111,6 +111,7 @@ def list_names():
     return jsonify(list(options))
 
 
+@app.route('/', methods=['GET'])
 @app.route('/json', methods=['GET'])
 def get_nice_interface():
     return render_template('curation_service/fresh_stmts_view.html')
