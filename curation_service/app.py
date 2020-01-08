@@ -272,6 +272,8 @@ def get_parser():
                               '"source" in the INDRA Database Curation '
                               'table.'))
     parser.add_argument('email', help='Enter your, the curator\'s, email')
+    parser.add_argument('--port', type=int, default=5000,
+                        help='The port on which the service is running.')
     return parser
 
 
@@ -318,4 +320,4 @@ if __name__ == '__main__':
 
     update_curations()
 
-    app.run()
+    app.run(port=args.port)
