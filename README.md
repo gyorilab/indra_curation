@@ -20,11 +20,11 @@ and their various dependancies installed and available on your python path.
 ## Running
 
 To run the tool, first make sure you have your INDRA Statements generated in a
-pickle file somewhere, with path `/path/to/stmt/pickles`. You then start up
+pickle file somewhere, with path `/path/to/workingdir`. You then start up
 the service:
 
 ```
-python /path/to/indra_curation/curation_service/app.py /path/to/stmt/pickles <curation-label> <your@email.com>
+python /path/to/curation_service/app.py /path/to/workingdir <label> <your@email.com>
 ```
 
 The first option indicates the _directory_ containing the statement pickles,
@@ -36,16 +36,18 @@ This will begin a web service on your localhost, probably port 5000, the
 output will specify in either case. For the rest of the discussion I will
 assume port 5000.
 
+You can also point to an s3 prefix instead of a location on your local disk.
+You can indicate this by using prepending the "filepath" with `s3:`,
+e.g. `s3:/prefix/for/workingdir/`. Note that because this is an s3 prefix, a trailing
+slash is **NOT** assumed.
+
 
 ## Curating
 
-To begin curating the statements in, for example,
-`/path/to/stmt/pickles/tp53_stmts.pkl`, navigate to
-`http://localhost:5000/show/tp53_stmts` in your browser. The first time you do
-this, it will generate an HTML file which is stored in the same directory
-alongside the original pickle file, and sharing its name (with .html replacing
-.pkl, of course). Future calls to `tp53_stmts` will simply reload the same
-HTML file.
+You can now go to `localhost:5000/json` and select one of your pickle files
+from the dropdown menu to begin curating. The back-end service will generate
+and cache JSON, which can be forcefully reloaded by clicking the
+<img src="https://bigmech.s3.amazonaws.com/indra-db/reload.png" width=10 height=10> button.
 
 You can now begin exploring the statements and their evidence. To view prior
 curations, click the button next to a curation called "Load Previous".

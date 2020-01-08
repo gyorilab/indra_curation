@@ -1,20 +1,26 @@
+import json
 import re
 import boto3
 import pickle
+import logging
 import argparse
 from os import path, listdir
 from datetime import datetime
 
-from flask import Flask, request, jsonify, url_for, abort, Response
+from flask import Flask, request, jsonify, url_for, abort, Response, \
+    render_template
 from jinja2 import Environment, ChoiceLoader
 
 from indra.assemblers.html import HtmlAssembler
-from indra.assemblers.html.assembler import loader as indra_loader
+from indra.assemblers.html.assembler import loader as indra_loader, \
+    _format_stmt_text, _format_evidence_text
 
 from indra_db import get_db
 from indra_db.client import submit_curation
 from indra_db.exceptions import BadHashError
 
+
+logger = logging.getLogger("curation_service")
 
 app = Flask(__name__)
 
@@ -49,7 +55,7 @@ def _list_files(name):
         # Get the list of possible files, choose html if available, else pkl.
         list_resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
         if not list_resp['KeyCount']:
-            print(f"No files match prefix: {prefix}")
+            logger.info(f"No files match prefix: {prefix}")
             return []
         ret = (f"s3:{bucket}/{e['Key']}" for e in list_resp['Contents'])
     else:
@@ -91,26 +97,51 @@ def _put_file(file_path, content):
     return
 
 
-@app.route('/show/<name>', methods=['GET'])
-def load(name):
+@app.route('/list', methods=['GET'])
+def list_names():
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
-    print(f"Attempting to load {name}")
+    # List all files under the prefix.
+    options = set()
+    for option in _list_files(''):
+        for ending in ['.html', '.pkl']:
+            if option.endswith(ending):
+                options.add(option.replace(ending, '')
+                                  .replace(WORKING_DIR, ''))
+    return jsonify(list(options))
+
+
+@app.route('/json', methods=['GET'])
+def get_nice_interface():
+    return render_template('curation_service/fresh_stmts_view.html')
+
+
+@app.route('/json/<name>', methods=['GET'])
+def get_json_content(name):
+    assert WORKING_DIR is not None, "WORKING_DIR is not defined."
+
+    logger.info(f"Attempting to load JSON for {name}")
+
+    regenerate = request.args.get('regen', 'false') == 'true'
+    if regenerate:
+        logger.info(f"Will regenerate JSON for {name}")
+
+    grouped = request.args.get('grouped', 'false') == 'true'
 
     # Select the correct file
-    is_html = False
+    is_json = False
     file_path = None
     for option in _list_files(name):
-        if option.endswith('.html'):
+        if option.endswith('.json') and not regenerate:
             file_path = option
-            is_html = True
+            is_json = True
             break
         elif option.endswith('.pkl'):
             file_path = option
 
     if file_path is None:
-        print(f"ERROR: Invalid name: {name}")
-        abort(400, (f"Invalid name: neither {name}.pkl nor {name}.html "
+        logger.error(f"Invalid name: {name}")
+        abort(400, (f"Invalid name: neither {name}.pkl nor {name}.json "
                     f"exists in {WORKING_DIR}. If using s3 directory, "
                     f"remember to add the '/' to the end for your working "
                     f"directory."))
@@ -119,27 +150,44 @@ def load(name):
     raw_content = _get_file(file_path)
 
     # If the file is HTML, just return it.
-    if is_html:
-        print("Returning with cached HTML file.")
-        return raw_content
+    if is_json:
+        logger.info("Returning with cached JSON file.")
+        return jsonify(json.loads(raw_content))
 
     # Get the pickle file.
     stmts = pickle.loads(raw_content)
 
     # Build the HTML file
-    html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
-                                   db_rest_url=request.url_root[:-1])
-    template = env.get_template('curation_service/cur_stmts_view.html')
-    content = html_assembler.make_model(template, with_grouping=False)
+    result = {'stmts': [], 'grouped': grouped}
+    if grouped:
+        html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
+                                       db_rest_url=request.url_root[:-1],
+                                       curation_dict=CURATIONS['cache'])
+        ordered_dict = html_assembler.make_json_model()
+        for key, group_dict in ordered_dict.items():
+            group_dict['key'] = key
+            result['stmts'].append(group_dict)
+    else:
+        for stmt in sorted(stmts,
+                           key=lambda s: (len(s.evidence), s.get_hash()),
+                           reverse=True):
+            stmt_dict = {
+                'evidence': _format_evidence_text(stmt, CURATIONS['cache']),
+                'english': _format_stmt_text(stmt),
+                'evidence_count': len(stmt.evidence),
+                'hash': str(stmt.get_hash()),
+                'source_count': None
+            }
+            result['stmts'].append(stmt_dict)
 
     # Save the file to s3
-    html_file_path = file_path.replace('.pkl', '.html')
-    print(f"Saved HTML file to {html_file_path}")
-    _put_file(html_file_path, content)
+    json_file_path = file_path.replace('.pkl', '.json')
+    logger.info(f"Saved JSON file to {json_file_path}")
+    _put_file(json_file_path, json.dumps(result, indent=2))
 
     # Return the result.
-    print("Returning with newly generated HTML file.")
-    return content
+    logger.info("Returning with newly generated JSON file.")
+    return jsonify(result)
 
 
 @app.route('/curations/submit', methods=['POST'])
@@ -149,7 +197,7 @@ def submit_curation_to_db():
     source_hash = int(request.json.get('source_hash'))
     text = request.json.get('comment')
     tag = request.json.get('error_type')
-    print(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
+    logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
@@ -172,7 +220,7 @@ def submit_curation_to_db():
 
     # Respond
     res = {'result': 'success', 'ref': {'id': dbid}}
-    print("Got result: %s" % str(res))
+    logger.info("Got result: %s" % str(res))
     return jsonify(res)
 
 
@@ -183,9 +231,9 @@ def get_curation(stmt_hash, ev_hash):
         update_curations()
 
     key = (int(stmt_hash), int(ev_hash))
-    print(f"Looking for curations matching {key}")
+    logger.info(f"Looking for curations matching {key}")
     relevant_curations = CURATIONS['cache'].get(key, [])
-    print("Returning with result:\n"
+    logger.info("Returning with result:\n"
           + '\n'.join(str(e) for e in relevant_curations))
 
     return jsonify(relevant_curations)
@@ -196,7 +244,7 @@ def get_curation_list():
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
         update_curations()
-    return jsonify([{'key': k, 'value': v}
+    return jsonify([{'key': [str(n) for n in k], 'value': v}
                     for k, v in CURATIONS['cache'].items()])
 
 
@@ -252,6 +300,7 @@ def update_curations():
         CURATIONS['cache'][key].append(cur_dict)
 
     CURATIONS['last_updated'] = datetime.now()
+    logger.info(f"Loaded {len(CURATIONS['cache'])} curations into cache.")
     return
 
 
@@ -259,13 +308,13 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     WORKING_DIR = args.working_dir
-    print(f"Working in {WORKING_DIR}")
+    logger.info(f"Working in {WORKING_DIR}")
 
     CURATION_TAG = args.tag
-    print(f"Using tag {CURATION_TAG}")
+    logger.info(f"Using tag {CURATION_TAG}")
 
     CURATOR_EMAIL = args.email
-    print(f"Curator email: {CURATOR_EMAIL}")
+    logger.info(f"Curator email: {CURATOR_EMAIL}")
 
     update_curations()
 
