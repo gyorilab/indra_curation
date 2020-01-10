@@ -16,7 +16,13 @@ var pieceMealMixin = {
         return {
             end_n: 10,
             dn: 10,
+            bottom: false
         }
+    },
+    created: function() {
+        window.addEventListener('scroll', () => {
+            this.bottom = this.bottomVisible()
+        })
     },
     computed: {
         list_shown: function() {
@@ -38,8 +44,22 @@ var pieceMealMixin = {
 
         loadAll: function() {
             this.end_n = this.base_list.length;
+        },
+
+        bottomVisible: function() {
+            const scrollY = window.scrollY;
+            const visible = document.documentElement.clientHeight;
+            const pageHeight = document.documentElement.scrollHeight;
+            const bottomOfPage = visible + scrollY >= pageHeight;
+            return bottomOfPage || pageHeight < visible;
+        }
+    },
+    watch: {
+        bottom: function(bottom) {
+            if (bottom) {
+                this.loadMore()
+            }
         }
     }
-
 }
 
