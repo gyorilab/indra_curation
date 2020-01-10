@@ -41,7 +41,7 @@ Vue.component('interface', {
                     <img src='https://bigmech.s3.amazonaws.com/indra-db/reload.png' style='width: 1em; height: 1em'>
                   </button>
                 </h1>
-                <stmt-display :stmts='stmts' :grouped='grouped'/>
+                <stmt-display :stmts='stmts' :grouped='grouped' :autoload='true'/>
             </div>
         </div>
         `,

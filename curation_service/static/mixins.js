@@ -1,3 +1,7 @@
+const sleep = (milliseconds) => {
+    return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
+
 var expanderMixin = {
     data: function () {
         return {
@@ -12,6 +16,12 @@ var expanderMixin = {
 }
 
 var pieceMealMixin = {
+    props: {
+        autoload: {
+            type: Boolean,
+            default: false
+        }
+    },
     data: function() {
         return {
             end_n: 10,
@@ -20,6 +30,9 @@ var pieceMealMixin = {
         }
     },
     created: function() {
+        if (!this.autoload) {
+            return;
+        }
         window.addEventListener('scroll', () => {
             this.bottom = this.bottomVisible()
         })
@@ -40,10 +53,23 @@ var pieceMealMixin = {
         }
     },
     methods: {
-        loadMore: function() {
+        loadMore: async function() {
+            // If the list is fully loaded, there is nothing to do.
+            if (this.end_n >= this.base_list.length) {
+                return;
+            }
+
+            // Lengthen the list.
             this.end_n += this.dn;
-            if (bottom) {
-                this.loadMore();
+
+            // If we're autoloading, check to see if we need to fill
+            // in the page some more.
+            if (this.autoload) {
+                await sleep(100);
+                if (this.bottomVisible()) {
+                    console.log("Filling in some more.")
+                    this.loadMore();
+                }
             }
         },
 
@@ -62,6 +88,7 @@ var pieceMealMixin = {
     watch: {
         bottom: function(bottom) {
             if (bottom) {
+                console.log('Bottom watch triggered.')
                 this.loadMore();
             }
         }
