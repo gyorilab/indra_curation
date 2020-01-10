@@ -14,12 +14,14 @@ Vue.component('stmt-display', {
                        :key='stmt.hash'
                        v-bind='stmt'/>
           </div>
-          <div class='text-center clickable'
+          <div v-if='!autoload'
+               class='text-center clickable'
                v-show='show_buttons'
                v-on:click='loadMore'>
             Load {{ next_batch }} more...
           </div>
-          <div class='text-center clickable'
+          <div v-if='!autoload'
+               class='text-center clickable'
                v-show='show_buttons'
                v-on:click='loadAll'>
             Load all...
