@@ -23,6 +23,8 @@ var pieceMealMixin = {
         window.addEventListener('scroll', () => {
             this.bottom = this.bottomVisible()
         })
+
+        this.loadMore();
     },
     computed: {
         list_shown: function() {
@@ -40,6 +42,9 @@ var pieceMealMixin = {
     methods: {
         loadMore: function() {
             this.end_n += this.dn;
+            if (bottom) {
+                this.loadMore();
+            }
         },
 
         loadAll: function() {
@@ -57,7 +62,7 @@ var pieceMealMixin = {
     watch: {
         bottom: function(bottom) {
             if (bottom) {
-                this.loadMore()
+                this.loadMore();
             }
         }
     }
