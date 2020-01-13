@@ -24,7 +24,7 @@ Vue.component('stmt-display', {
                class='text-center clickable'
                v-show='show_buttons'
                v-on:click='loadAll'>
-            Load all...
+            Load all {{ stmts.length - end_n }} remaining...
           </div>
         </div>
       </div>
