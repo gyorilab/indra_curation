@@ -24,13 +24,14 @@ var pieceMealMixin = {
     },
     data: function() {
         return {
-            end_n: 10,
+            end_n: 0,
             dn: 10,
             bottom: false
         }
     },
     created: function() {
         if (!this.autoload) {
+            this.end_n = 10;
             return;
         }
         window.addEventListener('scroll', () => {
@@ -91,6 +92,17 @@ var pieceMealMixin = {
                 console.log('Bottom watch triggered.')
                 this.loadMore();
             }
+        },
+
+        base_list: function(base_list) {
+            console.log('Base list changed. Resetting end_n.');
+            if (this.autoload)
+                this.end_n = 10;
+            else
+                this.end_n = 0;
+            this.bottom = false;
+
+            this.loadMore();
         }
     }
 }
