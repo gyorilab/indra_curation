@@ -24,7 +24,7 @@ Vue.component('statement', {
             <div class='text-center clickable'
                  v-show='show_buttons'
                  v-on:click='loadAll'>
-              Load all...
+              Load all {{ evidence.length - end_n }} remaining...
             </div>
           </div>
         </div>
