@@ -25,7 +25,7 @@ Vue.component('interface', {
                     type='button'
                     class='btn btn-default btn-submit pull-right'
                     style='padding: 2px 6px'
-                    v-on:click='getStmts'>
+                    @click='getStmts'>
                   Load
                 </button>
             </div>
@@ -37,7 +37,7 @@ Vue.component('interface', {
                       class='btn btn-default btn-submit pull-right'
                       style='padding: 2px 6px'
                       title='Regnerate Results'
-                      v-on:click='getStmts(true)'>
+                      @click='getStmts(true)'>
                     <img src='https://bigmech.s3.amazonaws.com/indra-db/reload.png' style='width: 1em; height: 1em'>
                   </button>
                 </h1>
