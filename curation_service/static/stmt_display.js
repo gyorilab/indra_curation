@@ -3,6 +3,9 @@ Vue.component('stmt-display', {
         <div class='stmts'>
           <div class='header-row'>
             <h3 v-bind:title="metadata_display">Statements</h3>
+            <button class="btn btn-primary" @click="loadAll">
+              Load All
+            </button>
           </div>
           <div v-if='grouped'>
             <top-group v-for='top_group in list_shown'
