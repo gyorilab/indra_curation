@@ -1,6 +1,8 @@
+import os
 import json
 import re
 import boto3
+import click
 import pickle
 import logging
 import argparse
@@ -254,30 +256,6 @@ def update_curations_endpoint():
     update_curations()
 
 
-def get_parser():
-    parser = argparse.ArgumentParser(
-        description=("Generate and enable curation using an HTML document "
-                     "displaying the statements in the given pickle file.")
-    )
-    parser.add_argument('working_dir',
-                        help=("The directory containing any files you wish "
-                              "to load. This may either be local or on s3. If "
-                              "using s3, give the prefix as "
-                              "'s3:bucket/prefix/path/'. Without including "
-                              "'s3:', it will be assumed the path is local. "
-                              "Note that no '/' will be added automatically "
-                              "to the end of the prefix."))
-    parser.add_argument('tag',
-                        help=('Give these curations a tag to separate them '
-                              'out from the rest. This tag is stored as '
-                              '"source" in the INDRA Database Curation '
-                              'table.'))
-    parser.add_argument('email', help='Enter your, the curator\'s, email')
-    parser.add_argument('--port', type=int, default=5000,
-                        help='The port on which the service is running.')
-    return parser
-
-
 def update_curations():
     CURATIONS['cache'] = {}
 
@@ -286,7 +264,11 @@ def update_curations():
                  ('pa_hash', 'stmt_hash'), 'source_hash']
 
     # Build up the curation dict.
+    db_key = "primary"
     db = get_db('primary')
+    if db is None:
+        raise RuntimeError(f"unable to get database: {db_key}")
+
     curations = db.select_all(db.Curation)
     for curation in curations:
         key = (curation.pa_hash, curation.source_hash)
@@ -307,18 +289,49 @@ def update_curations():
     return
 
 
-if __name__ == '__main__':
-    parser = get_parser()
-    args = parser.parse_args()
-    WORKING_DIR = args.working_dir
+@click.command(
+    help="Generate and enable curation using an HTML document "
+         "displaying the statements in the given pickle file."
+)
+@click.option(
+    '--tag',
+    required=True,
+    help=('Give these curations a tag to separate them '
+          'out from the rest. This tag is stored as '
+          '"source" in the INDRA Database Curation '
+          'table.')
+)
+@click.option('--email', required=True, help="Email address of the curator")
+@click.option(
+    '--directory',
+    default=os.getcwd(),
+    show_default=True,
+    help=("The directory containing any files you wish "
+          "to load. This may either be local or on s3. If "
+          "using s3, give the prefix as "
+          "'s3:bucket/prefix/path/'. Without including "
+          "'s3:', it will be assumed the path is local. "
+          "Note that no '/' will be added automatically "
+          "to the end of the prefix."),
+)
+@click.option('--port', default="5000", help='The port on which the service is running.')
+def main(tag: str, email: str, directory: str, port: str):
+    global WORKING_DIR
+    WORKING_DIR = directory
     logger.info(f"Working in {WORKING_DIR}")
 
-    CURATION_TAG = args.tag
+    global CURATION_TAG
+    CURATION_TAG = tag
     logger.info(f"Using tag {CURATION_TAG}")
 
-    CURATOR_EMAIL = args.email
+    global CURATION_EMAIL
+    CURATOR_EMAIL = email
     logger.info(f"Curator email: {CURATOR_EMAIL}")
 
     update_curations()
 
-    app.run(port=args.port)
+    app.run(port=port)
+
+
+if __name__ == '__main__':
+    main()
