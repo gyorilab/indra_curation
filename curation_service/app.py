@@ -28,7 +28,7 @@ app = Flask(__name__)
 # The point of this blueprint stuff is to make it possible
 # to move these route functions into a different place from
 # the WSGI and from the CLI that actually runs it
-blueprint = Blueprint("ui", __name__)
+ui_blueprint = Blueprint("ui", __name__)
 
 
 # Instantiate a jinja2 env.
@@ -103,7 +103,7 @@ def _put_file(file_path, content):
     return
 
 
-@blueprint.route('/list', methods=['GET'])
+@ui_blueprint.route('/list', methods=['GET'])
 def list_names():
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
@@ -117,13 +117,13 @@ def list_names():
     return jsonify(list(options))
 
 
-@blueprint.route('/', methods=['GET'])
-@blueprint.route('/json', methods=['GET'])
+@ui_blueprint.route('/', methods=['GET'])
+@ui_blueprint.route('/json', methods=['GET'])
 def get_nice_interface():
     return render_template('curation_service/fresh_stmts_view.html')
 
 
-@blueprint.route('/json/<name>', methods=['GET'])
+@ui_blueprint.route('/json/<name>', methods=['GET'])
 def get_json_content(name):
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
@@ -197,7 +197,7 @@ def get_json_content(name):
     return jsonify(result)
 
 
-@blueprint.route('/curations/submit', methods=['POST'])
+@ui_blueprint.route('/curations/submit', methods=['POST'])
 def submit_curation_to_db():
     # Unpack the request.
     pa_hash = int(request.json.get('stmt_hash'))
@@ -231,7 +231,7 @@ def submit_curation_to_db():
     return jsonify(res)
 
 
-@blueprint.route('/curations/<stmt_hash>/<ev_hash>', methods=['GET'])
+@ui_blueprint.route('/curations/<stmt_hash>/<ev_hash>', methods=['GET'])
 def get_curation(stmt_hash, ev_hash):
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
@@ -246,7 +246,7 @@ def get_curation(stmt_hash, ev_hash):
     return jsonify(relevant_curations)
 
 
-@blueprint.route('/curations', methods=['GET'])
+@ui_blueprint.route('/curations', methods=['GET'])
 def get_curation_list():
     time_since_update = datetime.now() - CURATIONS['last_updated']
     if time_since_update.total_seconds() > 3600:  # one hour
@@ -255,13 +255,13 @@ def get_curation_list():
                     for k, v in CURATIONS['cache'].items()])
 
 
-@blueprint.route('/curations/update_cache', methods=['POST'])
+@ui_blueprint.route('/curations/update_cache', methods=['POST'])
 def update_curations_endpoint():
     update_curations()
 
 
 # TODO add this inside main code in separate PR
-app.register_blueprint(blueprint)
+app.register_blueprint(ui_blueprint)
 
 
 def update_curations():
