@@ -332,7 +332,7 @@ def main(tag: str, email: str, directory: str, port: str):
     CURATION_TAG = tag
     logger.info(f"Using tag {CURATION_TAG}")
 
-    global CURATION_EMAIL
+    global CURATOR_EMAIL
     CURATOR_EMAIL = email
     logger.info(f"Curator email: {CURATOR_EMAIL}")
 
