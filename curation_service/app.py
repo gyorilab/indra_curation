@@ -17,11 +17,8 @@ from jinja2 import Environment, ChoiceLoader
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import loader as indra_loader, \
     _format_stmt_text, _format_evidence_text
-
-from indra_db import get_db
-from indra_db.client import submit_curation
-from indra_db.exceptions import BadHashError
-
+from indra.sources.indra_db_rest import get_curations, submit_curation, \
+    IndraDBRestAPIError
 
 logger = logging.getLogger("curation_service")
 
@@ -248,20 +245,26 @@ def submit_curation_to_db():
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
-    ip = request.remote_addr
     try:
-        # todo: do web client instead
-        dbid = submit_curation(pa_hash, tag, CURATOR_EMAIL, ip, text,
-                               source_hash, source_api)
-    except BadHashError as e:
-        abort(Response("Invalid hash: %s." % e.mk_hash, 400))
+        dbid = submit_curation(
+            hash_val=pa_hash,
+            tag=tag,
+            curator_email=CURATOR_EMAIL,
+            text=text,
+            ev_hash=source_hash,
+            source=source_api,
+        )
+
+    except IndraDBRestAPIError:
+        abort(Response(f"Could not submit curation for hash: {pa_hash}.", 400))
         return
 
     # Add the curation to the cache
     key = (pa_hash, source_hash)
     entry = dict(request.json)
-    entry.update(id=dbid, ip=ip, email=CURATOR_EMAIL, source=source_api,
-                 date=datetime.now())
+    entry.update(
+        id=dbid, email=CURATOR_EMAIL, source=source_api, date=datetime.now()
+    )
     if key not in CURATIONS['cache']:
         CURATIONS['cache'][key] = []
     CURATIONS['cache'][key].append(entry)
@@ -309,18 +312,13 @@ def update_curations():
     CURATIONS['cache'] = {}
 
     attr_maps = [('tag', 'error_type'), ('text', 'comment'),
-                 ('curator', 'email'), 'source', 'ip', 'date', 'id',
+                 ('curator', 'email'), 'source', 'date', 'id',
                  ('pa_hash', 'stmt_hash'), 'source_hash']
 
     # Build up the curation dict.
-    db_key = "primary"
-    db = get_db('primary')
-    if db is None:
-        raise RuntimeError(f"unable to get database: {db_key}")
-
-    curations = db.select_all(db.Curation)
+    curations = get_curations()
     for curation in curations:
-        key = (curation.pa_hash, curation.source_hash)
+        key = (curation["pa_hash"], curation["source_hash"])
         if key not in CURATIONS['cache']:
             CURATIONS['cache'][key] = []
 
@@ -328,9 +326,9 @@ def update_curations():
         for attr_map in attr_maps:
             if isinstance(attr_map, tuple):
                 db_attr, dict_key = attr_map
-                cur_dict[dict_key] = getattr(curation, db_attr)
+                cur_dict[dict_key] = curation[db_attr]
             else:
-                cur_dict[attr_map] = getattr(curation, attr_map)
+                cur_dict[attr_map] = curation[attr_map]
         CURATIONS['cache'][key].append(cur_dict)
 
     CURATIONS['last_updated'] = datetime.now()
