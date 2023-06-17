@@ -1,11 +1,12 @@
 import os
 import json
 import re
+from typing import Optional
+
 import boto3
 import click
 import pickle
 import logging
-import argparse
 from os import path, listdir
 from datetime import datetime
 
@@ -16,11 +17,8 @@ from jinja2 import Environment, ChoiceLoader
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import loader as indra_loader, \
     _format_stmt_text, _format_evidence_text
-
-from indra_db import get_db
-from indra_db.client import submit_curation
-from indra_db.exceptions import BadHashError
-
+from indra.sources.indra_db_rest import get_curations, submit_curation, \
+    IndraDBRestAPIError
 
 logger = logging.getLogger("curation_service")
 
@@ -42,6 +40,9 @@ CURATIONS = {'last_updated': None, 'cache': {}}
 WORKING_DIR = None
 CURATION_TAG = None
 CURATOR_EMAIL = None
+PICKLE_SORTING = None
+STARTUP_RELOAD = False
+REVERSE_SORT = False
 
 
 s3_path_patt = re.compile('^s3:([-a-zA-Z0-9_]+)/(.*?)$')
@@ -125,11 +126,17 @@ def get_nice_interface():
 
 @ui_blueprint.route('/json/<name>', methods=['GET'])
 def get_json_content(name):
+    global STARTUP_RELOAD, REVERSE_SORT
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
     logger.info(f"Attempting to load JSON for {name}")
 
     regenerate = request.args.get('regen', 'false') == 'true'
+
+    if STARTUP_RELOAD:
+        regenerate = True
+        STARTUP_RELOAD = False
+
     if regenerate:
         logger.info(f"Will regenerate JSON for {name}")
 
@@ -164,6 +171,38 @@ def get_json_content(name):
     # Get the pickle file.
     stmts = pickle.loads(raw_content)
 
+    # Sort the statements
+    if PICKLE_SORTING == "evidence":
+        # Sort by evidence count
+        # default is True, so reverse is False
+        reverse = not REVERSE_SORT
+        stmts = sorted(stmts, key=lambda s: len(s.evidence), reverse=reverse)
+    elif PICKLE_SORTING == "stmt_hash":
+        # Sort by statement hash
+        stmts = sorted(stmts, key=lambda s: s.get_hash(), reverse=REVERSE_SORT)
+    elif PICKLE_SORTING == "stmt_alphabetical":
+        # Sort the statements alphabetically by statement type then agent name
+        stmts = sorted(
+            stmts, key=lambda s: (
+                s.__class__.__name__, *(a.name for a in s.agent_list()),
+            ),
+            reverse=REVERSE_SORT
+        )
+    elif PICKLE_SORTING == "agents_alphabetical":
+        # Sort the statements alphabetically by agent name, then statement type
+        stmts = sorted(
+            stmts,
+            key=lambda s: (
+                *(a.name for a in s.agent_list()), s.__class__.__name__
+            ),
+            reverse=REVERSE_SORT
+        )
+    # elif PICKLE_SORTING == "curation":
+    #     pass # need to implement
+    else:
+        assert PICKLE_SORTING is None, \
+            f"Invalid sorting: {PICKLE_SORTING}"
+
     # Build the HTML file
     result = {'stmts': [], 'grouped': grouped}
     if grouped:
@@ -175,9 +214,7 @@ def get_json_content(name):
             group_dict['key'] = key
             result['stmts'].append(group_dict)
     else:
-        for stmt in sorted(stmts,
-                           key=lambda s: (len(s.evidence), s.get_hash()),
-                           reverse=True):
+        for stmt in stmts:
             stmt_dict = {
                 'evidence': _format_evidence_text(stmt, CURATIONS['cache']),
                 'english': _format_stmt_text(stmt),
@@ -208,19 +245,26 @@ def submit_curation_to_db():
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
-    ip = request.remote_addr
     try:
-        dbid = submit_curation(pa_hash, tag, CURATOR_EMAIL, ip, text,
-                               source_hash, source_api)
-    except BadHashError as e:
-        abort(Response("Invalid hash: %s." % e.mk_hash, 400))
+        dbid = submit_curation(
+            hash_val=pa_hash,
+            tag=tag,
+            curator_email=CURATOR_EMAIL,
+            text=text,
+            ev_hash=source_hash,
+            source=source_api,
+        )
+
+    except IndraDBRestAPIError:
+        abort(Response(f"Could not submit curation for hash: {pa_hash}.", 400))
         return
 
     # Add the curation to the cache
     key = (pa_hash, source_hash)
     entry = dict(request.json)
-    entry.update(id=dbid, ip=ip, email=CURATOR_EMAIL, source=source_api,
-                 date=datetime.now())
+    entry.update(
+        id=dbid, email=CURATOR_EMAIL, source=source_api, date=datetime.now()
+    )
     if key not in CURATIONS['cache']:
         CURATIONS['cache'][key] = []
     CURATIONS['cache'][key].append(entry)
@@ -268,18 +312,13 @@ def update_curations():
     CURATIONS['cache'] = {}
 
     attr_maps = [('tag', 'error_type'), ('text', 'comment'),
-                 ('curator', 'email'), 'source', 'ip', 'date', 'id',
+                 ('curator', 'email'), 'source', 'date', 'id',
                  ('pa_hash', 'stmt_hash'), 'source_hash']
 
     # Build up the curation dict.
-    db_key = "primary"
-    db = get_db('primary')
-    if db is None:
-        raise RuntimeError(f"unable to get database: {db_key}")
-
-    curations = db.select_all(db.Curation)
+    curations = get_curations()
     for curation in curations:
-        key = (curation.pa_hash, curation.source_hash)
+        key = (curation["pa_hash"], curation["source_hash"])
         if key not in CURATIONS['cache']:
             CURATIONS['cache'][key] = []
 
@@ -287,9 +326,9 @@ def update_curations():
         for attr_map in attr_maps:
             if isinstance(attr_map, tuple):
                 db_attr, dict_key = attr_map
-                cur_dict[dict_key] = getattr(curation, db_attr)
+                cur_dict[dict_key] = curation[db_attr]
             else:
-                cur_dict[attr_map] = getattr(curation, attr_map)
+                cur_dict[attr_map] = curation[attr_map]
         CURATIONS['cache'][key].append(cur_dict)
 
     CURATIONS['last_updated'] = datetime.now()
@@ -322,8 +361,48 @@ def update_curations():
           "Note that no '/' will be added automatically "
           "to the end of the prefix."),
 )
-@click.option('--port', default="5000", help='The port on which the service is running.')
-def main(tag: str, email: str, directory: str, port: str):
+@click.option(
+    '--port',
+    default="5000",
+    help='The port on which the service is running.'
+)
+@click.option(
+    "--statement-sorting",
+    type=click.Choice(
+        [
+            "evidence",
+            "stmt_hash",
+            "stmt_alphabetical",
+            "agents_alphabetical",
+            # "curations",
+        ]
+    ),
+    required=False,
+    help="The sorting method to use for the pickled statements. If not "
+         "provided, the statements will be sorted the way they are stored in "
+         "the pickle file or the cache. Available options are: "
+         " - 'evidence' (sort by number of evidence, highest first), "
+         " - 'stmt_hash' (sort by statement hash), "
+         " - 'stmt_alphabetical' (sort by statement type and alphabetically "
+         "   by agent names), "
+         " - 'agents_alphabetical' (sort by agent names, then by statement "
+         "   type)."
+         # " - curations (sort by number of curations, lowest first)"
+)
+@click.option(
+    "--reverse-sorting",
+    is_flag=True,
+    help="If provided, the statements will be sorted in reverse order. Does "
+         "not apply if no sorting method is provided."
+)
+def main(
+    tag: str,
+    email: str,
+    directory: str,
+    port: str,
+    statement_sorting: Optional[str] = None,
+    reverse_sorting: bool = False,
+):
     global WORKING_DIR
     WORKING_DIR = directory
     logger.info(f"Working in {WORKING_DIR}")
@@ -335,6 +414,21 @@ def main(tag: str, email: str, directory: str, port: str):
     global CURATOR_EMAIL
     CURATOR_EMAIL = email
     logger.info(f"Curator email: {CURATOR_EMAIL}")
+
+    global PICKLE_SORTING
+    PICKLE_SORTING = statement_sorting
+
+    global REVERSE_SORT
+    REVERSE_SORT = reverse_sorting
+
+    global STARTUP_RELOAD
+    STARTUP_RELOAD = False
+    if PICKLE_SORTING is not None:
+        logger.info(
+            f"{'Reverse sorting' if REVERSE_SORT else 'Sorting'} "
+            f"statements by {PICKLE_SORTING}"
+        )
+        STARTUP_RELOAD = True
 
     update_curations()
 

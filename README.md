@@ -13,8 +13,8 @@ rather than the pure JavaScript used previously.
 
 ## Installation
 
-There is no special installation required, besides having `indra`, `indra_db`,
-and their various dependancies installed and available on your python path.
+There is no special installation required, besides having `indra`,
+and its various dependencies installed and available on your python path.
 
 
 ## Running
