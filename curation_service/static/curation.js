@@ -158,6 +158,13 @@ Vue.component('curation-row', {
                     this.clear();
                     this.icon.style = "color: #00FF00";
                     break;
+                case 422:
+                    // Unprocessable Entity: use to indicate validation errors for the
+                    // comment text field. Set message to the error message from the server.
+                    const errorData = await resp.json();
+                    this.message = "Invalid format: " + errorData.message;
+                    this.icon.style = "color: #FF0000";
+                    break;
                 case 400:
                     this.message = resp.status + ": Bad Curation Data";
                     this.icon.style = "color: #FF0000";
