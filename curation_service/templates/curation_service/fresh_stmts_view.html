@@ -79,10 +79,10 @@
   <!-- development version, includes helpful console warnings -->
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script>
-      let CURATION_ADDR = "{{ url_for('ui.submit_curation_to_db') }}";
-      let CURATION_LIST_ADDR = "{{ url_for('ui.get_curation_list') }}";
-      let JSON_ADDR = "{{ url_for('ui.get_json_content', name='') }}";
-      let LIST_ADDR = "{{ url_for('ui.list_names') }}";
+      const CURATION_ADDR = "{{ url_for('ui.submit_curation_to_db') }}";
+      const CURATION_LIST_ADDR = "{{ url_for('ui.get_curation_list') }}";
+      const JSON_ADDR = "{{ url_for('ui.get_json_content', name='') }}";
+      const LIST_ADDR = "{{ url_for('ui.list_names') }}";
   </script>
 </head>
 <body>
