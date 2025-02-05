@@ -21,26 +21,57 @@ and its various dependencies installed and available on your python path.
 
 To run the tool, first make sure you have your INDRA Statements generated in a
 pickle file somewhere, with path `/path/to/workingdir`. You then start up
-the service:
+the service by running a variant of the following command:
+
+```shell
+python /path/to/curation_service/app.py \
+  --directory /path/to/workingdir \
+  --tag label \
+  --email your@email.com
+```
+
+This will begin a web service on your localhost.
+
+Full usage (copied from `app.py --help`):
 
 ```
-python /path/to/curation_service/app.py /path/to/workingdir <label> <your@email.com>
+Usage: app.py [OPTIONS]
+
+  Generate and enable curation using an HTML document displaying the
+  statements in the given pickle file.
+
+Options:
+  --tag TEXT                      Give these curations a tag to separate them
+                                  out from the rest. This tag is stored as
+                                  "source" in the INDRA Database Curation
+                                  table.  [required]
+  --email TEXT                    Email address of the curator  [required]
+  --directory TEXT                The directory containing any files you wish
+                                  to load. This may either be local or on s3.
+                                  If using s3, give the prefix as
+                                  's3:bucket/prefix/path/'. Without including
+                                  's3:', it will be assumed the path is local.
+                                  Note that no '/' will be added automatically
+                                  to the end of the prefix.  [default: current 
+                                  directory]
+  --port TEXT                     The port on which the service is running.
+  --statement-sorting [evidence|stmt_hash|stmt_alphabetical|agents_alphabetical]
+                                  The sorting method to use for the pickled
+                                  statements. If not provided, the statements
+                                  will be sorted the way they are stored in
+                                  the pickle file or the cache. Available
+                                  options are:  - 'evidence' (sort by number
+                                  of evidence, highest first),  - 'stmt_hash'
+                                  (sort by statement hash),  -
+                                  'stmt_alphabetical' (sort by statement type
+                                  and alphabetically    by agent names),  -
+                                  'agents_alphabetical' (sort by agent names,
+                                  then by statement    type).
+  --reverse-sorting               If provided, the statements will be sorted
+                                  in reverse order. Does not apply if no
+                                  sorting method is provided.
+
 ```
-
-The first option indicates the _directory_ containing the statement pickles,
-the second a label with which you want to tag these curations, so that you can
-distinguish them from the rest for future analysis. The last option is your
-email which distinguishes you as the curator.
-
-This will begin a web service on your localhost, probably port 5000, the
-output will specify in either case. For the rest of the discussion I will
-assume port 5000.
-
-You can also point to an s3 prefix instead of a location on your local disk.
-You can indicate this by using prepending the "filepath" with `s3:`,
-e.g. `s3:/prefix/for/workingdir/`. Note that because this is an s3 prefix, a trailing
-slash is **NOT** assumed.
-
 
 ## Curating
 
