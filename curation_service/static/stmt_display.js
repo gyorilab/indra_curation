@@ -67,7 +67,7 @@ Vue.component('stmt-display', {
             }
             let search = this.search.toLowerCase();
             return this.stmts.filter(stmt => {
-                return stmt.english.toLowerCase().includes(search);
+                return stmt.untagged_english.toLowerCase().includes(search);
             });
         }
     },
