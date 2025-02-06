@@ -1,7 +1,7 @@
 import os
 import json
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 import boto3
 import click
@@ -107,19 +107,24 @@ def _put_file(file_path, content):
 
 # Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
 # Let keys be case-insensitive alphabet strings and values be any alphanumeric strings.
-comment_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
-VALID_KEYS = {
-    'CELL', 'TAXID', 'DIRECT', 'EFFECT', 'SENTENCE', 'MECHANISM', 'RESIDUE'
-}
+signor_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
 
 
-def _validate_signor_comments(text):
+def _validate_signor_comments(text) -> Tuple[bool, str]:
+    valid_keys = {
+        'CELL', 'TAXID', 'DIRECT', 'EFFECT', 'SENTENCE', 'MECHANISM', 'RESIDUE'
+    }
+    valid_str = f"'{', '.join(valid_keys)}'"
     # Check if the comment has a valid syntax
-    m = comment_pattern.match(text)
+    m = signor_pattern.match(text)
 
     # Pattern is invalid
     if not m:
-        return True, []
+        return (
+            False,
+            "Invalid syntax. Should be 'KEY1:VALUE1;KEY2:VALUE2;...', where each key "
+            f"is one of {valid_str}."
+        )
 
     # Now test if the keys are valid
     invalid_keys = []
@@ -128,9 +133,17 @@ def _validate_signor_comments(text):
             # Skip empty strings e.g. from trailing ';'
             continue
         key, value = key_value.split(':', maxsplit=1)
-        if key.upper() not in VALID_KEYS:
+        if key.upper() not in valid_keys:
             invalid_keys.append(key)
-    return False, invalid_keys
+    if invalid_keys:
+        return False, (f"Invalid key(s): '{', '.join(invalid_keys)}'. Must be one of"
+                  " {valid_str}.")
+    return True, ""
+
+
+validation_funcs = {
+    "signor": _validate_signor_comments
+}
 
 
 @ui_blueprint.route('/list', methods=['GET'])
@@ -273,20 +286,15 @@ def submit_curation_to_db():
     evidence_source = request.json.get('evidence_source')
     logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
-    if CHECK_SYNTAX and text.strip() and evidence_source == 'signor':
-        invalid_pattern, bad_keys = _validate_signor_comments(text)
-        if invalid_pattern:
-            abort(
-                Response("Invalid syntax, should be 'KEYa:VALUE1;KEYb:VALUE2;...'", 422)
-            )
-        if bad_keys:
-            abort(
-                Response(
-                    f"Invalid key(s): '{', '.join(bad_keys)}'. Must be one of '"
-                    f"{', '.join(VALID_KEYS)}'.",
-                    422
-                )
-            )
+    if CHECK_SYNTAX and text.strip():
+        # Get source specific validation function
+        validation_fun = validation_funcs.get(evidence_source)
+        if validation_fun:
+            valid, msg = validation_fun(text)
+            if not valid:
+                abort(Response(msg, 422))
+        else:
+            logger.info(f"No validation function for evidence source {evidence_source}")
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
