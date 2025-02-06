@@ -116,11 +116,13 @@ Vue.component('curation-row', {
             console.log('Error Type: ' + this.error_type);
             if (!this.error_type) {
                 alert('Please enter an error type or "correct" for the statement in the dropdown menu.');
+                this.submitting = false;  // Reset the submit button.
                 return;
             }
 
             if (!this.comment && this.error_type == 'other') {
                 alert('Please describe the error when using option "other...".');
+                this.submitting = false;  // Reset the submit button.
                 return;
             }
 
