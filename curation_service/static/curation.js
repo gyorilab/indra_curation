@@ -77,7 +77,8 @@ Vue.component('curation-row', {
     props: {
         open: Boolean,
         source_hash: String,
-        stmt_hash: String
+        stmt_hash: String,
+        evidence_source: String
     },
     data: function() {
         return {
@@ -142,7 +143,8 @@ Vue.component('curation-row', {
                 error_type: this.error_type,
                 comment: this.comment,
                 source_hash: this.source_hash,
-                stmt_hash: this.stmt_hash
+                stmt_hash: this.stmt_hash,
+                evidence_source: this.evidence_source
             };
             console.log('Sending: ' + JSON.stringify(cur_dict));
             const resp = await fetch(CURATION_ADDR, {

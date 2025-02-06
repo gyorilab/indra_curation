@@ -270,9 +270,10 @@ def submit_curation_to_db():
     source_hash = int(request.json.get('source_hash'))
     text = request.json.get('comment')
     tag = request.json.get('error_type')
+    evidence_source = request.json.get('evidence_source')
     logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
-    if CHECK_SYNTAX and text.strip():
+    if CHECK_SYNTAX and text.strip() and evidence_source == 'signor':
         invalid_pattern, bad_keys = _validate_signor_comments(text)
         if invalid_pattern:
             abort(

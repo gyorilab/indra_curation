@@ -127,8 +127,11 @@ Vue.component('evidence', {
           </div>
           <div class='row'>
             <div class='col'>
-              <curation-row :open='curation_shown' :stmt_hash='stmt_hash'
-                            :source_hash='source_hash'/>
+              <curation-row
+                :open='curation_shown'
+                :stmt_hash='stmt_hash'
+                :evidence_source='source_api'
+                :source_hash='source_hash'/>
             </div>
           </div>
         </div>
