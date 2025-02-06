@@ -138,6 +138,10 @@ Vue.component('curation-row', {
             this.comment = "";
         },
 
+        emitPenStyle: function(penStyle) {
+            this.$emit('pen_style_update', penStyle);
+        },
+
         submitCuration: async function() {
             let cur_dict = {
                 error_type: this.error_type,
@@ -153,42 +157,51 @@ Vue.component('curation-row', {
                     headers: {'Content-Type': 'application/json'}
                     });
             console.log('Response Status: ' + resp.status);
+
+            // Await the response from the server
+            let data;
+            if (resp.ok) {
+                data = await resp.json();
+            } else {
+                console.log('Response not ok');
+                data = await resp.text();
+            }
+            let penStyle = "";
             switch (resp.status) {
                 case 200:
                     this.submitting = false;
                     this.message = "Curation successful!";
                     this.clear();
-                    this.icon.style = "color: #00FF00";
+                    penStyle = "color: #00FF00";
+                    break;
+                case 400:
+                    this.message = resp.status + ": Bad Curation Data";
+                    penStyle = "color: #FF0000";
                     break;
                 case 422:
                     // Unprocessable Entity: use to indicate validation errors for the
                     // comment text field. Set message to the error message from the server.
-                    const errorData = await resp.json();
-                    this.message = "Invalid format: " + errorData.message;
-                    this.icon.style = "color: #FF0000";
-                    break;
-                case 400:
-                    this.message = resp.status + ": Bad Curation Data";
-                    this.icon.style = "color: #FF0000";
+                    this.message = data;
+                    penStyle = "color: #FF0000";
                     break;
                 case 500:
                     this.message = resp.status + ": Internal Server Error";
-                    this.icon.style = "color: #FF0000";
+                    penStyle = "color: #FF0000";
                     break;
                 case 504:
                     this.message = resp.status + ": Server Timeout";
-                    this.icon.style = "color: 58D3F7";
+                    penStyle = "color: 58D3F7";
                     break;
                 default:
                     console.log("Unexpected error");
                     console.log(resp);
                     this.message = resp.status + ': Uncaught error';
-                    this.icon.style = "color: #FF8000";
+                    penStyle = "color: #FF8000";
                     break;
             };
 
-            const data = await resp.json();
-            console.log('Got back: ' + JSON.stringify(data));
+            // Emit the status code to the parent component.
+            this.emitPenStyle(penStyle);
         },
 
         getCurations: async function() {
