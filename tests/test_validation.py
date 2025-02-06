@@ -1,4 +1,4 @@
-from curation_service.app import _validate_signor_comments
+from curation_service.validation import _validate_signor_comments
 
 
 def test_validate_signor_bad_syntax():
