@@ -43,6 +43,7 @@ CURATOR_EMAIL = None
 PICKLE_SORTING = None
 STARTUP_RELOAD = False
 REVERSE_SORT = False
+CHECK_SYNTAX = False
 
 
 s3_path_patt = re.compile('^s3:([-a-zA-Z0-9_]+)/(.*?)$')
@@ -271,6 +272,21 @@ def submit_curation_to_db():
     tag = request.json.get('error_type')
     logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
+    if CHECK_SYNTAX and text.strip():
+        invalid_pattern, bad_keys = _validate_signor_comments(text)
+        if invalid_pattern:
+            abort(
+                Response("Invalid syntax, should be 'KEYa:VALUE1;KEYb:VALUE2;...'", 422)
+            )
+        if bad_keys:
+            abort(
+                Response(
+                    f"Invalid key(s): '{', '.join(bad_keys)}'. Must be one of '"
+                    f"{', '.join(VALID_KEYS)}'.",
+                    422
+                )
+            )
+
     # Add a new entry to the database.
     source_api = CURATION_TAG
     try:
@@ -423,6 +439,11 @@ def update_curations():
     help="If provided, the statements will be sorted in reverse order. Does "
          "not apply if no sorting method is provided."
 )
+@click.option(
+    "--check-syntax",
+    is_flag=True,
+    help="If provided, the comment syntax will be checked for validity."
+)
 def main(
     tag: str,
     email: str,
@@ -430,6 +451,7 @@ def main(
     port: str,
     statement_sorting: Optional[str] = None,
     reverse_sorting: bool = False,
+    check_syntax: bool = False
 ):
     global WORKING_DIR
     WORKING_DIR = directory
@@ -448,6 +470,9 @@ def main(
 
     global REVERSE_SORT
     REVERSE_SORT = reverse_sorting
+
+    global CHECK_SYNTAX
+    CHECK_SYNTAX = check_syntax
 
     global STARTUP_RELOAD
     STARTUP_RELOAD = False
