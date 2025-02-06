@@ -1,10 +1,28 @@
 import re
 from typing import Tuple
 
+
+__all__ = ['validation_funcs']
+
+
 signor_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
 
 
-def _validate_signor_comments(text) -> Tuple[bool, str]:
+def validate_signor_comments(text) -> Tuple[bool, str]:
+    """Validate comment string of a curation for a signor evidence
+
+    Parameters
+    ----------
+    text :
+        The comment string to validate
+
+    Returns
+    -------
+    :
+        A tuple of two values. The first value is a boolean indicating if the comment
+        string is valid. The second value is a string with an error message if the
+        comment string is invalid, or an empty string if the comment string is valid.
+    """
     valid_keys = {
         'CELL', 'TAXID', 'DIRECT', 'EFFECT', 'SENTENCE', 'MECHANISM', 'RESIDUE'
     }
@@ -36,5 +54,5 @@ def _validate_signor_comments(text) -> Tuple[bool, str]:
 
 
 validation_funcs = {
-    "signor": _validate_signor_comments
+    "signor": validate_signor_comments
 }
