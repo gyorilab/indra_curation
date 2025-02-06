@@ -6,6 +6,12 @@ Vue.component('stmt-display', {
             <button class="btn btn-primary" @click="loadAll">
               Load All
             </button>
+            <div class="form-group ml-2 d-inline-flex">
+              <input v-model='search'
+                     id="filter-search"
+                     placeholder="Search..."
+                     class="form-control"/>
+            </div>
           </div>
           <div v-if='grouped'>
             <top-group v-for='top_group in list_shown'
@@ -38,6 +44,11 @@ Vue.component('stmt-display', {
         source_key_dict: Object,
         grouped: Boolean
     },
+    data: function () {
+        return {
+            search: '',
+        }
+    },
     computed: {
         metadata_display: function () {
             let ret = '';
@@ -49,7 +60,15 @@ Vue.component('stmt-display', {
             return ret;
         },
         base_list: function () {
-            return this.stmts;
+            // If we are searching, we need to filter the statements
+            // based on the search string.
+            if (!this.search) {
+                return this.stmts;
+            }
+            let search = this.search.toLowerCase();
+            return this.stmts.filter(stmt => {
+                return stmt.english.toLowerCase().includes(search);
+            });
         }
     },
     mixins: [pieceMealMixin]
