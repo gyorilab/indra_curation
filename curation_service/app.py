@@ -45,6 +45,7 @@ PICKLE_SORTING = None
 STARTUP_RELOAD = False
 REVERSE_SORT = False
 CHECK_SYNTAX = False
+FILTER_CURATED = False
 
 
 s3_path_patt = re.compile('^s3:([-a-zA-Z0-9_]+)/(.*?)$')
@@ -132,7 +133,7 @@ def get_nice_interface():
 
 @ui_blueprint.route('/json/<name>', methods=['GET'])
 def get_json_content(name):
-    global STARTUP_RELOAD, REVERSE_SORT
+    global STARTUP_RELOAD, REVERSE_SORT, FILTER_CURATED
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
 
     logger.info(f"Attempting to load JSON for {name}")
@@ -208,6 +209,12 @@ def get_json_content(name):
     else:
         assert PICKLE_SORTING is None, \
             f"Invalid sorting: {PICKLE_SORTING}"
+
+    # Filter out curated statements
+    if FILTER_CURATED:
+        stmts = [
+            stmt for stmt in stmts if stmt.get_hash() not in CURATIONS["curated_hashes"]
+        ]
 
     # Build the HTML file
     result = {'stmts': [], 'grouped': grouped}
@@ -326,7 +333,9 @@ app.register_blueprint(ui_blueprint)
 
 
 def update_curations():
+    # Todo: use CurationCache class from other repo?
     CURATIONS['cache'] = {}
+    CURATIONS["curated_hashes"] = set()
 
     attr_maps = [('tag', 'error_type'), ('text', 'comment'),
                  ('curator', 'email'), 'source', 'date', 'id',
@@ -336,6 +345,8 @@ def update_curations():
     curations = get_curations()
     for curation in curations:
         key = (curation["pa_hash"], curation["source_hash"])
+        if key[0] is not None:
+            CURATIONS["curated_hashes"].add(int(key[0]))
         if key not in CURATIONS['cache']:
             CURATIONS['cache'][key] = []
 
@@ -417,6 +428,11 @@ def update_curations():
     is_flag=True,
     help="If provided, the comment syntax will be checked for validity."
 )
+@click.option(
+    "--filter-curated",
+    is_flag=True,
+    help="If provided, only statements without prior curations will be shown."
+)
 def main(
     tag: str,
     email: str,
@@ -424,7 +440,8 @@ def main(
     port: str,
     statement_sorting: Optional[str] = None,
     reverse_sorting: bool = False,
-    check_syntax: bool = False
+    check_syntax: bool = False,
+    filter_curated: bool = False,
 ):
     global WORKING_DIR
     WORKING_DIR = directory
@@ -446,6 +463,9 @@ def main(
 
     global CHECK_SYNTAX
     CHECK_SYNTAX = check_syntax
+
+    global FILTER_CURATED
+    FILTER_CURATED = filter_curated
 
     global STARTUP_RELOAD
     STARTUP_RELOAD = False
