@@ -433,6 +433,11 @@ def update_curations():
     is_flag=True,
     help="If provided, only statements without prior curations will be shown."
 )
+@click.option(
+    "--app-debug",
+    is_flag=True,
+    help="If provided, the Flask app will run in debug mode."
+)
 def main(
     tag: str,
     email: str,
@@ -442,6 +447,7 @@ def main(
     reverse_sorting: bool = False,
     check_syntax: bool = False,
     filter_curated: bool = False,
+    app_debug: bool = False,
 ):
     global WORKING_DIR
     WORKING_DIR = directory
@@ -478,7 +484,7 @@ def main(
 
     update_curations()
 
-    app.run(port=port)
+    app.run(port=port, debug=app_debug)
 
 
 if __name__ == '__main__':
