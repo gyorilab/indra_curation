@@ -62,7 +62,7 @@ Vue.component('ref-link', {
                 return;
 
             const entrez_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi';
-            this.title_text = "Loading...";
+            let id, db;
             switch (this.ref_name.toUpperCase()) {
                 case 'PMID':
                     id = this.ref_id;
