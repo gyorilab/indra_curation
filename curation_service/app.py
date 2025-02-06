@@ -104,6 +104,34 @@ def _put_file(file_path, content):
     return
 
 
+# Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
+# Let keys be case-insensitive alphabet strings and values be any alphanumeric strings.
+comment_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
+VALID_KEYS = {
+    'CELL', 'TAXID', 'DIRECT', 'EFFECT', 'SENTENCE', 'MECHANISM', 'RESIDUE'
+}
+
+
+def _validate_signor_comments(text):
+    # Check if the comment has a valid syntax
+    m = comment_pattern.match(text)
+
+    # Pattern is invalid
+    if not m:
+        return True, []
+
+    # Now test if the keys are valid
+    invalid_keys = []
+    for key_value in text.split(';'):
+        if not key_value:
+            # Skip empty strings e.g. from trailing ';'
+            continue
+        key, value = key_value.split(':', maxsplit=1)
+        if key.upper() not in VALID_KEYS:
+            invalid_keys.append(key)
+    return False, invalid_keys
+
+
 @ui_blueprint.route('/list', methods=['GET'])
 def list_names():
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
