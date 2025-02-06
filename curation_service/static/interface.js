@@ -36,7 +36,7 @@ Vue.component('interface', {
                       type='button'
                       class='btn btn-default btn-submit pull-right'
                       style='padding: 2px 6px'
-                      title='Regnerate Results'
+                      title='Regenerate Results'
                       @click='getStmts(true)'>
                     <img src='https://bigmech.s3.amazonaws.com/indra-db/reload.png' style='width: 1em; height: 1em'>
                   </button>
