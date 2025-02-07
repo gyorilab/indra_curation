@@ -1,33 +1,24 @@
 Vue.component('interface', {
     template: `
         <div class='interface'>
-            <div class='form' 
-                 style='display:inline-block; 
-                        vertical-align: middle; 
-                        top: 0px'>
-                <form name='user_feedback_form'>
-                  <select v-model='name'>
-                      <option value='' selected disabled hidden>
-                        Select a collection of Statements...
-                      </option>
-                      <option v-for='option  in options'
-                              :value='option'
-                              :key='option'>
-                          {{ option }}
-                      </option>
-                  </select>
-                </form>
-            </div>
-            <div class='stmt_button'
-                 style='display:inline-block; 
-                        vertical-align: middle;'>
-                <button
-                    type='button'
-                    class='btn btn-default btn-submit pull-right'
-                    style='padding: 2px 6px'
-                    @click='getStmts'>
-                  Load
-                </button>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary btn-submit"
+                            @click="getStmts(false)"
+                            type="button">
+                      Load Statement Set
+                    </button>
+                </div>
+                <select class="custom-select"
+                        id="stmt-set-select"
+                        v-model="name"
+                        aria-label="Select a collection of Statements">
+                    <option v-for='option in options'
+                            :value='option'
+                            :key='option'>
+                        {{ option }}
+                    </option>
+                </select>
             </div>
             <div v-if='stmts'>
                 <h1>
@@ -58,6 +49,10 @@ Vue.component('interface', {
     },
     methods: {
         getStmts: async function(regenerate=false) {
+            if (!this.name) {
+                alert("Please select a statement set to load.");
+                return;
+            }
             const resp = await fetch(`${JSON_ADDR}${this.name}?regen=${regenerate}&grouped=false`, {method: 'GET'});
             console.log("getStmts response status: " + resp.status);
             const data = await resp.json();
