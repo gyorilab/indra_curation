@@ -48,8 +48,8 @@ def validate_signor_comments(text) -> Tuple[bool, str]:
         if key.upper() not in valid_keys:
             invalid_keys.append(key)
     if invalid_keys:
-        return False, (f"Invalid key(s): '{', '.join(invalid_keys)}'. Must be one of"
-                  " {valid_str}.")
+        return False, (f"Invalid key(s): '{', '.join(invalid_keys)}'. Must be one of "
+                       f"{valid_str}.")
     return True, ""
 
 
