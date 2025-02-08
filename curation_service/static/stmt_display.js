@@ -54,8 +54,22 @@ Vue.component('stmt-display', {
     data: function () {
         return {
             search: '',
-            filter_curations: false
+            filter_curations: false,
+            curation_hashes: new Set() // Set of hashes for curated statements
         }
+    },
+    methods: {
+        getCurations: function () {
+            fetch(CURATION_LIST_ADDR, {method: 'GET'})
+                .then(response => response.json())
+                .then(data => {
+                    // Fill with hashes for each curation
+                    // Each curation in the data is a list of curation entries
+                    // {[stmt_hash, source_hash]: [{curation_entry1}, {curation_entry2}, ...]}
+                    // We want to get a list of unique statement hashes.
+                    this.curation_hashes = new Set(data.map(({ key }) => key[0]));
+                });
+        },
     },
     computed: {
         metadata_display: function () {
@@ -68,13 +82,18 @@ Vue.component('stmt-display', {
             return ret;
         },
         base_list: function () {
-            // If we are searching, we need to filter the statements
-            // based on the search string.
-            if (!this.search) {
-                return this.stmts;
+            console.log(`Filter curations is now ${this.filter_curations}`);
+            // If there are no curations, get them.
+            if (this.curation_hashes.size === 0) {
+                this.getCurations();
             }
             let search = this.search.toLowerCase();
             return this.stmts.filter(stmt => {
+                // Filter out curated statements if the switch is on and filter on search
+                // term unless the search term is empty.
+                if (this.filter_curations & this.curation_hashes.has(stmt.hash)) {
+                    return false;
+                }
                 return stmt.untagged_english.toLowerCase().includes(search);
             });
         }
