@@ -8,7 +8,7 @@ __all__ = ['validation_funcs']
 signor_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
 
 
-def validate_signor_comments(text) -> Tuple[bool, str]:
+def validate_comment(text: str) -> Tuple[bool, str]:
     """Validate comment string of a curation for a signor evidence
 
     Parameters
