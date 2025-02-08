@@ -2,7 +2,7 @@ import re
 from typing import Tuple
 
 
-__all__ = ['validation_funcs']
+__all__ = ['validate_comment']
 
 
 signor_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
@@ -51,8 +51,3 @@ def validate_comment(text: str) -> Tuple[bool, str]:
         return False, (f"Invalid key(s): '{', '.join(invalid_keys)}'. Must be one of "
                        f"{valid_str}.")
     return True, ""
-
-
-validation_funcs = {
-    "signor": validate_signor_comments
-}

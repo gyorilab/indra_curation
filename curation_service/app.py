@@ -14,7 +14,7 @@ from flask import Flask, request, jsonify, url_for, abort, Response, \
     render_template, Blueprint
 from jinja2 import Environment, ChoiceLoader
 
-from curation_service.validation import validation_funcs
+from curation_service.validation import validate_comment
 from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import (
@@ -261,18 +261,12 @@ def submit_curation_to_db():
     source_hash = int(request.json.get('source_hash'))
     text = request.json.get('comment')
     tag = request.json.get('error_type')
-    evidence_source = request.json.get('evidence_source')
     logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
 
     if CHECK_SYNTAX and text.strip():
-        # Get source specific validation function
-        validation_fun = validation_funcs.get(evidence_source)
-        if validation_fun:
-            valid, msg = validation_fun(text)
-            if not valid:
-                abort(Response(msg, 422))
-        else:
-            logger.info(f"No validation function for evidence source {evidence_source}")
+        valid, msg = validate_comment(text)
+        if not valid:
+            abort(Response(msg, 422))
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
