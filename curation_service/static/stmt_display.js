@@ -12,6 +12,13 @@ Vue.component('stmt-display', {
                      placeholder="Search..."
                      class="form-control"/>
             </div>
+            <div class="custom-control custom-switch">
+              <input type="checkbox"
+                     class="custom-control-input"
+                     v-model="filter_curations"
+                     id="filter-curations">
+              <label class="custom-control-label" for="filter-curations">Filter curations</label>
+            </div>
           </div>
           <div v-if='grouped'>
             <top-group v-for='top_group in list_shown'
@@ -47,6 +54,7 @@ Vue.component('stmt-display', {
     data: function () {
         return {
             search: '',
+            filter_curations: false
         }
     },
     computed: {
