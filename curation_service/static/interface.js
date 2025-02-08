@@ -25,7 +25,7 @@ Vue.component('interface', {
                   Statement Results
                   <button
                       type='button'
-                      class='btn btn-default btn-submit pull-right'
+                      class='btn btn-light btn-submit pull-right'
                       style='padding: 2px 6px'
                       title='Regenerate Results'
                       @click='getStmts(true)'>
