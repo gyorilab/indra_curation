@@ -30,7 +30,7 @@ Vue.component('curation-row', {
                           vertical-align: middle;'>
                   <button
                       type='button'
-                      class='btn btn-default btn-submit pull-right'
+                      class='btn btn-secondary btn-submit pull-right'
                       style='padding: 2px 6px'
                       :disabled='submitting'
                       v-on:click='submitForm'>Submit
@@ -41,7 +41,7 @@ Vue.component('curation-row', {
                           vertical-align: middle;'>
                   <button
                       type='button'
-                      class='btn btn-default btn-submit pull-right'
+                      class='btn btn-light btn-submit pull-right'
                       style='padding: 2px 6px'
                       v-on:click='loadPrevious'>Load Previous
                   </button>
