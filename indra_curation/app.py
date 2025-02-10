@@ -3,7 +3,6 @@ import json
 import re
 from typing import Optional, Tuple
 
-import boto3
 import click
 import pickle
 import logging
@@ -23,7 +22,18 @@ from indra.assemblers.html.assembler import (
 from indra.sources.indra_db_rest import get_curations, submit_curation, \
     IndraDBRestAPIError
 
+
 logger = logging.getLogger("curation_service")
+
+
+try:
+    import boto3
+except ImportError:
+    boto3 = None
+    logger.warning(
+        "boto3 not installed. S3 functionality will not be available. Install boto3 to "
+        "enable it."
+    )
 
 app = Flask(__name__)
 # The point of this blueprint stuff is to make it possible
@@ -56,6 +66,9 @@ def _list_files(name):
     """List files with the given name."""
     m = s3_path_patt.match(WORKING_DIR)
     if m:
+        if boto3 is None:
+            raise ImportError("boto3 is required for s3 functionality.")
+
         # We're using s3
         s3 = boto3.client('s3')
         bucket, prefix = m.groups()
@@ -79,6 +92,9 @@ def _get_file(file_path):
     """Get a file of the given name."""
     m = s3_path_patt.match(file_path)
     if m:
+        if boto3 is None:
+            raise ImportError("boto3 is required for s3 functionality.")
+
         # We're using s3
         s3 = boto3.client('s3')
         bucket, key = m.groups()
@@ -96,6 +112,9 @@ def _put_file(file_path, content):
     """Save a file with the given name."""
     m = s3_path_patt.match(file_path)
     if m:
+        if boto3 is None:
+            raise ImportError("boto3 is required for s3 functionality.")
+
         # We're using s3
         s3 = boto3.client('s3')
         bucket, key = m.groups()
