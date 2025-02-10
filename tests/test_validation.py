@@ -1,4 +1,4 @@
-from curation_service.validation import validate_comment
+from indra_curation.validation import validate_comment
 
 
 def test_validate_signor_bad_syntax():

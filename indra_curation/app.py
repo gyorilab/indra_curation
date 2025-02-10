@@ -14,7 +14,7 @@ from flask import Flask, request, jsonify, url_for, abort, Response, \
     render_template, Blueprint
 from jinja2 import Environment, ChoiceLoader
 
-from curation_service.validation import validate_comment
+from indra_curation.validation import validate_comment
 from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import (
