@@ -393,7 +393,8 @@ def update_curations():
 @click.option(
     '--port',
     type=int,
-    default="5000",
+    default=5000,
+    show_default=True,
     help='The port on which the service is running.'
 )
 @click.option(
@@ -439,7 +440,7 @@ def main(
     tag: str,
     email: str,
     directory: str,
-    port: int,
+    port: int = 5000,
     statement_sorting: Optional[str] = None,
     reverse_sorting: bool = False,
     check_syntax: bool = False,
