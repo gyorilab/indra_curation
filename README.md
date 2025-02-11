@@ -24,12 +24,15 @@ pickle file somewhere, with path `/path/to/workingdir`. You then start up
 the service by running a variant of the following command:
 
 ```shell
-python -m indra_curation.app --directory /path/to/workingdir --tag label --email your@email.com
+python -m indra_curation.app --directory /path/to/workingdir --tag label --email your@email.com --check-syntax
 ```
 
-This will begin a web service on your localhost.
+This will begin a web service on your localhost. When submitting a curation with text 
+in the comments field, the syntax will be checked for validity. If the syntax is invalid,
+the curation will not be submitted and an error message will be displayed of what the 
+issue is.
 
-Full usage (copied from `app.py --help`):
+Full usage (copied from `python -m indra_curation.app --help`):
 
 ```
 Usage: python -m indra_curation.app [OPTIONS]
