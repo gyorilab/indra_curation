@@ -24,10 +24,7 @@ pickle file somewhere, with path `/path/to/workingdir`. You then start up
 the service by running a variant of the following command:
 
 ```shell
-python /path/to/curation_service/app.py \
-  --directory /path/to/workingdir \
-  --tag label \
-  --email your@email.com
+python -m indra_curation.app --directory /path/to/workingdir --tag label --email your@email.com
 ```
 
 This will begin a web service on your localhost.
@@ -35,7 +32,7 @@ This will begin a web service on your localhost.
 Full usage (copied from `app.py --help`):
 
 ```
-Usage: app.py [OPTIONS]
+Usage: python -m indra_curation.app [OPTIONS]
 
   Generate and enable curation using an HTML document displaying the
   statements in the given pickle file.
@@ -52,9 +49,10 @@ Options:
                                   's3:bucket/prefix/path/'. Without including
                                   's3:', it will be assumed the path is local.
                                   Note that no '/' will be added automatically
-                                  to the end of the prefix.  [default: current 
-                                  directory]
-  --port TEXT                     The port on which the service is running.
+                                  to the end of the prefix.  [default:
+                                  /home/klas/repos/indra_curation]
+  --port INTEGER                  The port on which the service is running.
+                                  [default: 5000]
   --statement-sorting [evidence|stmt_hash|stmt_alphabetical|agents_alphabetical]
                                   The sorting method to use for the pickled
                                   statements. If not provided, the statements
@@ -70,7 +68,11 @@ Options:
   --reverse-sorting               If provided, the statements will be sorted
                                   in reverse order. Does not apply if no
                                   sorting method is provided.
-
+  --check-syntax                  If provided, the comment syntax will be
+                                  checked for validity.
+  --app-debug                     If provided, the Flask app will run in debug
+                                  mode.
+  --help                          Show this message and exit.
 ```
 
 ## Curating
