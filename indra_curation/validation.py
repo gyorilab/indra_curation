@@ -5,7 +5,7 @@ from typing import Tuple
 __all__ = ['validate_comment']
 
 
-signor_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
+comment_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
 
 
 def validate_comment(text: str) -> Tuple[bool, str]:
@@ -28,7 +28,7 @@ def validate_comment(text: str) -> Tuple[bool, str]:
     }
     valid_str = f"'{', '.join(valid_keys)}'"
     # Check if the comment has a valid syntax
-    m = signor_pattern.match(text)
+    m = comment_pattern.match(text)
 
     # Pattern is invalid
     if not m:
