@@ -76,7 +76,7 @@ def _list_files(name):
         # Extend the prefix with the filename
         prefix += name
 
-        # Get the list of possible files, choose html if available, else pkl.
+        # Get the list of possible files
         list_resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
         if not list_resp['KeyCount']:
             logger.info(f"No files match prefix: {prefix}")
@@ -144,10 +144,9 @@ def list_names():
     # List all files under the prefix.
     options = set()
     for option in _list_files(''):
-        for ending in ['.html', '.pkl']:
-            if option.endswith(ending):
-                options.add(option.replace(ending, '')
-                                  .replace(WORKING_DIR, ''))
+        if option.endswith('.pkl'):
+            options.add(option.replace('.pkl', '')
+                              .replace(WORKING_DIR, ''))
     return jsonify(list(options))
 
 
@@ -196,7 +195,7 @@ def get_json_content(name):
 
     raw_content = _get_file(file_path)
 
-    # If the file is HTML, just return it.
+    # If the file is JSON, just return it.
     if is_json:
         logger.info("Returning with cached JSON file.")
         return jsonify(json.loads(raw_content))
@@ -236,9 +235,10 @@ def get_json_content(name):
         assert PICKLE_SORTING is None, \
             f"Invalid sorting: {PICKLE_SORTING}"
 
-    # Build the HTML file
+    # Build the JSON file.
     result = {'stmts': [], 'grouped': grouped}
     if grouped:
+        # Do HTML assembly, then convert to JSON
         html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
                                        db_rest_url=request.url_root[:-1],
                                        curation_dict=CURATIONS['cache'])
