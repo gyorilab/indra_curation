@@ -4,7 +4,8 @@ from typing import Tuple
 
 __all__ = ['validate_comment']
 
-
+# Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
+# Let keys be case-insensitive alphabet strings and values be any alphanumeric strings.
 comment_pattern = re.compile(r'^([a-zA-Z]+:[a-zA-Z0-9]+;)*([a-zA-Z]+:[a-zA-Z0-9]+)?$')
 
 

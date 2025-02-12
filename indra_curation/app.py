@@ -137,10 +137,6 @@ def _get_english(stmt) -> Tuple[str, str]:
     return english, tag_agents(english, ea.stmt_agents[0])
 
 
-# Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
-# Let keys be case-insensitive alphabet strings and values be any alphanumeric strings.
-
-
 @ui_blueprint.route('/list', methods=['GET'])
 def list_names():
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
