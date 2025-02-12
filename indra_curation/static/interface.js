@@ -33,7 +33,7 @@ Vue.component('interface', {
                     </button>
                 </h1>
                 Click the 'Reload Statements' button to regenerate the results from the
-                pickle file.
+                pickle file and update the display with the most recent curations.
                 <hr>
                 <stmt-display :stmts='stmts' :grouped='grouped' :autoload='true'/>
             </div>
