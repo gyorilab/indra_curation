@@ -2,7 +2,6 @@ Vue.component('stmt-display', {
     template: `
         <div class='stmts'>
           <div class='header-row'>
-            <h3 v-bind:title="metadata_display">Statements</h3>
             <button class="btn btn-primary" @click="loadAll">
               Load All
             </button>
