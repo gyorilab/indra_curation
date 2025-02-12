@@ -13,9 +13,19 @@ rather than the pure JavaScript used previously.
 
 ## Installation
 
-There is no special installation required, besides having `indra`,
-and its various dependencies installed and available on your python path.
+To install from Github, run
 
+```bash
+pip install git+https://github.com/gyorilab/indra_curation.git
+```
+
+or for local development, clone and then install in edit mode as
+
+```bash
+git clone https://github.com/gyorilab/indra_curation.git
+cd indra_curation
+pip install -e .
+```
 
 ## Running
 
@@ -80,7 +90,7 @@ Options:
 
 ## Curating
 
-You can now go to `localhost:5000/json` and select one of your pickle files
+You can now go to `http://localhost:5000` and select one of your pickle files
 from the dropdown menu to begin curating. The back-end service will generate
 and cache JSON, which can be forcefully reloaded by clicking the
 <img src="https://bigmech.s3.amazonaws.com/indra-db/reload.png" width=10 height=10> button.
