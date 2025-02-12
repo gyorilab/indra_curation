@@ -146,7 +146,9 @@ def list_names():
     for option in _list_files(''):
         if option.endswith('.pkl'):
             options.add(option.replace('.pkl', '')
-                              .replace(WORKING_DIR, ''))
+                              .replace(WORKING_DIR, '')
+                              .lstrip('/')
+                        )
     return jsonify(list(options))
 
 
