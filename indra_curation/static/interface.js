@@ -22,16 +22,19 @@ Vue.component('interface', {
             </div>
             <div v-if='stmts'>
                 <h1>
-                  Statement Results
-                  <button
-                      type='button'
-                      class='btn btn-light btn-submit pull-right'
-                      style='padding: 2px 6px'
-                      title='Regenerate Results'
-                      @click='getStmts(true)'>
-                    <img src='https://bigmech.s3.amazonaws.com/indra-db/reload.png' style='width: 1em; height: 1em'>
-                  </button>
+                    Statement Results
+                    <button
+                        type='button'
+                        class='btn btn-light btn-submit pull-right'
+                        style='padding: 2px 6px'
+                        title='Regenerate results from the server'
+                        @click='getStmts(true)'>
+                        Reload Statements
+                    </button>
                 </h1>
+                Click the 'Reload Statements' button to regenerate the results from the
+                pickle file.
+                <hr>
                 <stmt-display :stmts='stmts' :grouped='grouped' :autoload='true'/>
             </div>
         </div>
