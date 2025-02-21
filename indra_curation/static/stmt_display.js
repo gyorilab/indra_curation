@@ -80,6 +80,18 @@ Vue.component('stmt-display', {
             }
             return ret;
         },
+        extended_stmts: function () {
+            // Add untagged_english to each statement
+            return this.stmts.map(stmt => {
+                let tag = document.createElement('div');
+                tag.innerHTML = stmt.english;
+                // Get inner text
+                let untagged_english = tag.innerText;
+                // Set the untagged_english property
+                stmt = {...stmt, untagged_english: untagged_english};
+                return stmt;
+            });
+        },
         base_list: function () {
             console.log(`Filter curations is now ${this.filter_curations}`);
             // If there are no curations, get them.
@@ -87,7 +99,7 @@ Vue.component('stmt-display', {
                 this.getCurations();
             }
             let search = this.search.toLowerCase();
-            return this.stmts.filter(stmt => {
+            return this.extended_stmts.filter(stmt => {
                 // Filter out curated statements if the switch is on and filter on search
                 // term unless the search term is empty.
                 if (this.filter_curations & this.curation_hashes.has(stmt.hash)) {
