@@ -1,7 +1,7 @@
 import os
 import json
 import re
-from typing import Optional, Tuple
+from typing import Optional
 
 import click
 import pickle
@@ -16,9 +16,8 @@ from jinja2 import Environment, ChoiceLoader
 from indra_curation.validation import validate_comment
 from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.html import HtmlAssembler
-from indra.assemblers.html.assembler import (
-    loader as indra_loader, _format_evidence_text, tag_agents
-)
+from indra.assemblers.html.assembler import loader as indra_loader, \
+    _format_stmt_text, _format_evidence_text
 from indra.sources.indra_db_rest import get_curations, submit_curation, \
     IndraDBRestAPIError
 
@@ -127,14 +126,8 @@ def _put_file(file_path, content):
     return
 
 
-def _get_english(stmt) -> Tuple[str, str]:
-    """Get the English text of a statement, with and without agent tags."""
-    ea = EnglishAssembler([stmt])
-    english = ea.make_model()
-    if not english:
-        english = str(stmt)
-        return english, tag_agents(english, stmt.agent_list())
-    return english, tag_agents(english, ea.stmt_agents[0])
+# Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
+# Let keys be case-insensitive alphabet strings and values be any alphanumeric strings.
 
 
 @ui_blueprint.route('/list', methods=['GET'])
@@ -250,11 +243,9 @@ def get_json_content(name):
             result['stmts'].append(group_dict)
     else:
         for stmt in stmts:
-            untagged_english, tagged_english = _get_english(stmt)
             stmt_dict = {
                 'evidence': _format_evidence_text(stmt, CURATIONS['cache']),
-                'english': tagged_english,
-                'untagged_english': untagged_english,
+                'english': _format_stmt_text(stmt),
                 'evidence_count': len(stmt.evidence),
                 'hash': str(stmt.get_hash()),
                 'source_count': None
