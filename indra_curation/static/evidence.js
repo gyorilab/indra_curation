@@ -62,7 +62,7 @@ Vue.component('ref-link', {
                 return;
 
             const entrez_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi';
-            this.title_text = "Loading...";
+            let id, db;
             switch (this.ref_name.toUpperCase()) {
                 case 'PMID':
                     id = this.ref_id;
@@ -109,6 +109,7 @@ Vue.component('evidence', {
               <div class='row'>
                 <div class='col-3 nvp clickable text-center'
                      :class="{ 'has-curation-badge': num_curations }"
+                     :style='penStyle'
                      v-on:click='toggleCuration'
                      :title='num_curations'>
                   &#9998;
@@ -127,8 +128,12 @@ Vue.component('evidence', {
           </div>
           <div class='row'>
             <div class='col'>
-              <curation-row :open='curation_shown' :stmt_hash='stmt_hash'
-                            :source_hash='source_hash'/>
+              <curation-row
+                v-on:pen_style_update="penStyle = $event"
+                :open='curation_shown'
+                :stmt_hash='stmt_hash'
+                :evidence_source='source_api'
+                :source_hash='source_hash'/>
             </div>
           </div>
         </div>
@@ -144,7 +149,8 @@ Vue.component('evidence', {
     },
     data: function() {
         return {
-            curation_shown: false
+            curation_shown: false,
+            penStyle: ''
         }
     },
     methods: {

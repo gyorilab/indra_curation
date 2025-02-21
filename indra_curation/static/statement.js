@@ -13,7 +13,7 @@ Vue.component('statement', {
           </h4>
           <div class='ev-list' v-show='show_list'>
             <evidence v-for='ev in list_shown'
-                      :key='ev.source_hash'
+                      :key='ev.html_key'
                       v-bind='ev'
                       :stmt_hash='hash'/>
             <div class='text-center clickable'
@@ -34,9 +34,25 @@ Vue.component('statement', {
         english: String,
         hash: String
     },
+    data: function () {
+        return {
+            html_key_set: new Set(),
+        }
+    },
     computed: {
         base_list: function() {
-            return this.evidence;
+            // Return the evidence list, extend each evidence with a key
+            return this.evidence.map(ev => {
+                let html_key = "";
+                if (!this.html_key_set.has(ev.source_hash)) {
+                    html_key = ev.source_hash;
+                } else {
+                    html_key = ev.source_hash + '_' + this.html_key_set.size;
+                }
+                this.html_key_set.add(html_key);
+                ev.html_key = html_key;
+                return ev;
+            });
         },
 
         total_curations: function() {

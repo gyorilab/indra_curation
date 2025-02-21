@@ -3,7 +3,6 @@ import json
 import re
 from typing import Optional
 
-import boto3
 import click
 import pickle
 import logging
@@ -14,13 +13,26 @@ from flask import Flask, request, jsonify, url_for, abort, Response, \
     render_template, Blueprint
 from jinja2 import Environment, ChoiceLoader
 
+from indra_curation.validation import validate_comment
+from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import loader as indra_loader, \
     _format_stmt_text, _format_evidence_text
 from indra.sources.indra_db_rest import get_curations, submit_curation, \
     IndraDBRestAPIError
 
+
 logger = logging.getLogger("curation_service")
+
+
+try:
+    import boto3
+except ImportError:
+    boto3 = None
+    logger.warning(
+        "boto3 not installed. S3 functionality will not be available. Install boto3 to "
+        "enable it."
+    )
 
 app = Flask(__name__)
 # The point of this blueprint stuff is to make it possible
@@ -43,6 +55,7 @@ CURATOR_EMAIL = None
 PICKLE_SORTING = None
 STARTUP_RELOAD = False
 REVERSE_SORT = False
+CHECK_SYNTAX = False
 
 
 s3_path_patt = re.compile('^s3:([-a-zA-Z0-9_]+)/(.*?)$')
@@ -52,6 +65,9 @@ def _list_files(name):
     """List files with the given name."""
     m = s3_path_patt.match(WORKING_DIR)
     if m:
+        if boto3 is None:
+            raise ImportError("boto3 is required for s3 functionality.")
+
         # We're using s3
         s3 = boto3.client('s3')
         bucket, prefix = m.groups()
@@ -59,7 +75,7 @@ def _list_files(name):
         # Extend the prefix with the filename
         prefix += name
 
-        # Get the list of possible files, choose html if available, else pkl.
+        # Get the list of possible files
         list_resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
         if not list_resp['KeyCount']:
             logger.info(f"No files match prefix: {prefix}")
@@ -75,6 +91,9 @@ def _get_file(file_path):
     """Get a file of the given name."""
     m = s3_path_patt.match(file_path)
     if m:
+        if boto3 is None:
+            raise ImportError("boto3 is required for s3 functionality.")
+
         # We're using s3
         s3 = boto3.client('s3')
         bucket, key = m.groups()
@@ -92,6 +111,9 @@ def _put_file(file_path, content):
     """Save a file with the given name."""
     m = s3_path_patt.match(file_path)
     if m:
+        if boto3 is None:
+            raise ImportError("boto3 is required for s3 functionality.")
+
         # We're using s3
         s3 = boto3.client('s3')
         bucket, key = m.groups()
@@ -104,6 +126,10 @@ def _put_file(file_path, content):
     return
 
 
+# Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
+# Let keys be case-insensitive alphabet strings and values be any alphanumeric strings.
+
+
 @ui_blueprint.route('/list', methods=['GET'])
 def list_names():
     assert WORKING_DIR is not None, "WORKING_DIR is not defined."
@@ -111,10 +137,11 @@ def list_names():
     # List all files under the prefix.
     options = set()
     for option in _list_files(''):
-        for ending in ['.html', '.pkl']:
-            if option.endswith(ending):
-                options.add(option.replace(ending, '')
-                                  .replace(WORKING_DIR, ''))
+        if option.endswith('.pkl'):
+            options.add(option.replace('.pkl', '')
+                              .replace(WORKING_DIR, '')
+                              .lstrip('/')
+                        )
     return jsonify(list(options))
 
 
@@ -163,7 +190,7 @@ def get_json_content(name):
 
     raw_content = _get_file(file_path)
 
-    # If the file is HTML, just return it.
+    # If the file is JSON, just return it.
     if is_json:
         logger.info("Returning with cached JSON file.")
         return jsonify(json.loads(raw_content))
@@ -203,9 +230,10 @@ def get_json_content(name):
         assert PICKLE_SORTING is None, \
             f"Invalid sorting: {PICKLE_SORTING}"
 
-    # Build the HTML file
+    # Build the JSON file.
     result = {'stmts': [], 'grouped': grouped}
     if grouped:
+        # Do HTML assembly, then convert to JSON
         html_assembler = HtmlAssembler(stmts, title='INDRA Curation',
                                        db_rest_url=request.url_root[:-1],
                                        curation_dict=CURATIONS['cache'])
@@ -242,6 +270,11 @@ def submit_curation_to_db():
     text = request.json.get('comment')
     tag = request.json.get('error_type')
     logger.info(f"Adding curation for stmt={pa_hash} and source_hash={source_hash}")
+
+    if CHECK_SYNTAX and text.strip():
+        valid, msg = validate_comment(text)
+        if not valid:
+            abort(Response(msg, 422))
 
     # Add a new entry to the database.
     source_api = CURATION_TAG
@@ -309,7 +342,9 @@ app.register_blueprint(ui_blueprint)
 
 
 def update_curations():
+    # Todo: use CurationCache class from other repo?
     CURATIONS['cache'] = {}
+    CURATIONS["curated_hashes"] = set()
 
     attr_maps = [('tag', 'error_type'), ('text', 'comment'),
                  ('curator', 'email'), 'source', 'date', 'id',
@@ -319,6 +354,8 @@ def update_curations():
     curations = get_curations()
     for curation in curations:
         key = (curation["pa_hash"], curation["source_hash"])
+        if key[0] is not None:
+            CURATIONS["curated_hashes"].add(int(key[0]))
         if key not in CURATIONS['cache']:
             CURATIONS['cache'][key] = []
 
@@ -363,7 +400,9 @@ def update_curations():
 )
 @click.option(
     '--port',
-    default="5000",
+    type=int,
+    default=5000,
+    show_default=True,
     help='The port on which the service is running.'
 )
 @click.option(
@@ -395,13 +434,25 @@ def update_curations():
     help="If provided, the statements will be sorted in reverse order. Does "
          "not apply if no sorting method is provided."
 )
+@click.option(
+    "--check-syntax",
+    is_flag=True,
+    help="If provided, the comment syntax will be checked for validity."
+)
+@click.option(
+    "--app-debug",
+    is_flag=True,
+    help="If provided, the Flask app will run in debug mode."
+)
 def main(
     tag: str,
     email: str,
     directory: str,
-    port: str,
+    port: int = 5000,
     statement_sorting: Optional[str] = None,
     reverse_sorting: bool = False,
+    check_syntax: bool = False,
+    app_debug: bool = False,
 ):
     global WORKING_DIR
     WORKING_DIR = directory
@@ -421,6 +472,9 @@ def main(
     global REVERSE_SORT
     REVERSE_SORT = reverse_sorting
 
+    global CHECK_SYNTAX
+    CHECK_SYNTAX = check_syntax
+
     global STARTUP_RELOAD
     STARTUP_RELOAD = False
     if PICKLE_SORTING is not None:
@@ -432,7 +486,7 @@ def main(
 
     update_curations()
 
-    app.run(port=port)
+    app.run(port=port, debug=app_debug)
 
 
 if __name__ == '__main__':

@@ -13,38 +13,84 @@ rather than the pure JavaScript used previously.
 
 ## Installation
 
-There is no special installation required, besides having `indra`,
-and its various dependencies installed and available on your python path.
+To install from Github, run
 
+```bash
+pip install git+https://github.com/gyorilab/indra_curation.git
+```
+
+or for local development, clone and then install in edit mode as
+
+```bash
+git clone https://github.com/gyorilab/indra_curation.git
+cd indra_curation
+pip install -e .
+```
 
 ## Running
 
 To run the tool, first make sure you have your INDRA Statements generated in a
 pickle file somewhere, with path `/path/to/workingdir`. You then start up
-the service:
+the service by running a variant of the following command:
+
+```shell
+python -m indra_curation.app --directory /path/to/workingdir --tag label --email your@email.com --check-syntax
+```
+
+This will begin a web service on your localhost. When submitting a curation with text 
+in the comments field, the syntax will be checked for validity. If the syntax is invalid,
+the curation will not be submitted and an error message will be displayed of what the 
+issue is.
+
+Full usage (copied from `python -m indra_curation.app --help`):
 
 ```
-python /path/to/curation_service/app.py /path/to/workingdir <label> <your@email.com>
+Usage: python -m indra_curation.app [OPTIONS]
+
+  Generate and enable curation using an HTML document displaying the
+  statements in the given pickle file.
+
+Options:
+  --tag TEXT                      Give these curations a tag to separate them
+                                  out from the rest. This tag is stored as
+                                  "source" in the INDRA Database Curation
+                                  table.  [required]
+  --email TEXT                    Email address of the curator  [required]
+  --directory TEXT                The directory containing any files you wish
+                                  to load. This may either be local or on s3.
+                                  If using s3, give the prefix as
+                                  's3:bucket/prefix/path/'. Without including
+                                  's3:', it will be assumed the path is local.
+                                  Note that no '/' will be added automatically
+                                  to the end of the prefix.  [default:
+                                  /home/klas/repos/indra_curation]
+  --port INTEGER                  The port on which the service is running.
+                                  [default: 5000]
+  --statement-sorting [evidence|stmt_hash|stmt_alphabetical|agents_alphabetical]
+                                  The sorting method to use for the pickled
+                                  statements. If not provided, the statements
+                                  will be sorted the way they are stored in
+                                  the pickle file or the cache. Available
+                                  options are:  - 'evidence' (sort by number
+                                  of evidence, highest first),  - 'stmt_hash'
+                                  (sort by statement hash),  -
+                                  'stmt_alphabetical' (sort by statement type
+                                  and alphabetically    by agent names),  -
+                                  'agents_alphabetical' (sort by agent names,
+                                  then by statement    type).
+  --reverse-sorting               If provided, the statements will be sorted
+                                  in reverse order. Does not apply if no
+                                  sorting method is provided.
+  --check-syntax                  If provided, the comment syntax will be
+                                  checked for validity.
+  --app-debug                     If provided, the Flask app will run in debug
+                                  mode.
+  --help                          Show this message and exit.
 ```
-
-The first option indicates the _directory_ containing the statement pickles,
-the second a label with which you want to tag these curations, so that you can
-distinguish them from the rest for future analysis. The last option is your
-email which distinguishes you as the curator.
-
-This will begin a web service on your localhost, probably port 5000, the
-output will specify in either case. For the rest of the discussion I will
-assume port 5000.
-
-You can also point to an s3 prefix instead of a location on your local disk.
-You can indicate this by using prepending the "filepath" with `s3:`,
-e.g. `s3:/prefix/for/workingdir/`. Note that because this is an s3 prefix, a trailing
-slash is **NOT** assumed.
-
 
 ## Curating
 
-You can now go to `localhost:5000/json` and select one of your pickle files
+You can now go to `http://localhost:5000` and select one of your pickle files
 from the dropdown menu to begin curating. The back-end service will generate
 and cache JSON, which can be forcefully reloaded by clicking the
 <img src="https://bigmech.s3.amazonaws.com/indra-db/reload.png" width=10 height=10> button.
