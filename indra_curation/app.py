@@ -1,9 +1,9 @@
+import argparse
 import os
 import json
 import re
 from typing import Optional
 
-import click
 import pickle
 import logging
 from os import path, listdir
@@ -373,107 +373,73 @@ def update_curations():
     return
 
 
-@click.command(
-    help="Generate and enable curation using an HTML document "
-         "displaying the statements in the given pickle file."
-)
-@click.option(
-    '--tag',
-    required=True,
-    help=('Give these curations a tag to separate them '
-          'out from the rest. This tag is stored as '
-          '"source" in the INDRA Database Curation '
-          'table.')
-)
-@click.option('--email', required=True, help="Email address of the curator")
-@click.option(
-    '--directory',
-    default=os.getcwd(),
-    show_default=True,
-    help=("The directory containing any files you wish "
-          "to load. This may either be local or on s3. If "
-          "using s3, give the prefix as "
-          "'s3:bucket/prefix/path/'. Without including "
-          "'s3:', it will be assumed the path is local. "
-          "Note that no '/' will be added automatically "
-          "to the end of the prefix."),
-)
-@click.option(
-    '--port',
-    type=int,
-    default=5000,
-    show_default=True,
-    help='The port on which the service is running.'
-)
-@click.option(
-    "--statement-sorting",
-    type=click.Choice(
-        [
-            "evidence",
-            "stmt_hash",
-            "stmt_alphabetical",
-            "agents_alphabetical",
-            # "curations",
-        ]
-    ),
-    required=False,
-    help="The sorting method to use for the pickled statements. If not "
-         "provided, the statements will be sorted the way they are stored in "
-         "the pickle file or the cache. Available options are: "
-         " - 'evidence' (sort by number of evidence, highest first), "
-         " - 'stmt_hash' (sort by statement hash), "
-         " - 'stmt_alphabetical' (sort by statement type and alphabetically "
-         "   by agent names), "
-         " - 'agents_alphabetical' (sort by agent names, then by statement "
-         "   type)."
-         # " - curations (sort by number of curations, lowest first)"
-)
-@click.option(
-    "--reverse-sorting",
-    is_flag=True,
-    help="If provided, the statements will be sorted in reverse order. Does "
-         "not apply if no sorting method is provided."
-)
-@click.option(
-    "--check-syntax",
-    is_flag=True,
-    help="If provided, the comment syntax will be checked for validity."
-)
-@click.option(
-    "--app-debug",
-    is_flag=True,
-    help="If provided, the Flask app will run in debug mode."
-)
-def main(
-    tag: str,
-    email: str,
-    directory: str,
-    port: int = 5000,
-    statement_sorting: Optional[str] = None,
-    reverse_sorting: bool = False,
-    check_syntax: bool = False,
-    app_debug: bool = False,
-):
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate and enable curation using an HTML document displaying statements."
+    )
+    parser.add_argument(
+        "--tag",
+        required=True,
+        help="Assign a tag that identifies these curations (stored as 'source')."
+    )
+    parser.add_argument(
+        "--email",
+        required=True,
+        help="Email address of the curator."
+    )
+    parser.add_argument(
+        "--directory",
+        default=os.getcwd(),
+        help="Directory containing files to load (local or S3)."
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=5000,
+        help="Port on which the service runs."
+    )
+    parser.add_argument(
+        "--statement-sorting",
+        choices=["evidence", "stmt_hash", "stmt_alphabetical", "agents_alphabetical"],
+        help="Method to sort statements."
+    )
+    parser.add_argument(
+        "--reverse-sorting",
+        action="store_true",
+        help="Reverse the statement sorting order."
+    )
+    parser.add_argument(
+        "--check-syntax",
+        action="store_true",
+        help="Check comment syntax for validity."
+    )
+    parser.add_argument(
+        "--app-debug",
+        action="store_true",
+        help="Run the Flask app in debug mode."
+    )
+
+    args = parser.parse_args()
     global WORKING_DIR
-    WORKING_DIR = directory
+    WORKING_DIR = args.directory
     logger.info(f"Working in {WORKING_DIR}")
 
     global CURATION_TAG
-    CURATION_TAG = tag
+    CURATION_TAG = args.tag
     logger.info(f"Using tag {CURATION_TAG}")
 
     global CURATOR_EMAIL
-    CURATOR_EMAIL = email
+    CURATOR_EMAIL = args.email
     logger.info(f"Curator email: {CURATOR_EMAIL}")
 
     global PICKLE_SORTING
-    PICKLE_SORTING = statement_sorting
+    PICKLE_SORTING = args.statement_sorting
 
     global REVERSE_SORT
-    REVERSE_SORT = reverse_sorting
+    REVERSE_SORT = args.reverse_sorting
 
     global CHECK_SYNTAX
-    CHECK_SYNTAX = check_syntax
+    CHECK_SYNTAX = args.check_syntax
 
     global STARTUP_RELOAD
     STARTUP_RELOAD = False
@@ -486,7 +452,7 @@ def main(
 
     update_curations()
 
-    app.run(port=port, debug=app_debug)
+    app.run(port=args.port, debug=args.app_debug)
 
 
 if __name__ == '__main__':
