@@ -43,3 +43,13 @@ def test_validate_signor_valid():
     assert valid_pattern
     assert isinstance(error_msg, str)
     assert len(error_msg) == 0
+
+
+def test_validate_signor_valid2():
+    text = (
+        "EFFECT:down-regulates quantity by destabilizing;EFFECT:down-regulates quantity;"
+    )
+    valid_pattern, error_msg = validate_comment(text)
+    assert valid_pattern
+    assert isinstance(error_msg, str)
+    assert len(error_msg) == 0
