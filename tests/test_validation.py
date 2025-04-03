@@ -10,6 +10,15 @@ def test_validate_signor_bad_syntax():
     assert "Invalid syntax" in error_msg
 
 
+def test_validate_signor_bad_syntax2():
+    text = ";:::;;;:CELL"
+    valid_pattern, error_msg = validate_comment(text)
+    assert not valid_pattern
+    assert isinstance(error_msg, str), error_msg.__class__
+    assert len(error_msg) > 0, "Expected an error message to be returned"
+    assert "No valid key-value pairs found." in error_msg, error_msg
+
+
 def test_validate_signor_bad_keys1a():
     text = "key:value"
     valid_pattern, error_msg = validate_comment(text)
