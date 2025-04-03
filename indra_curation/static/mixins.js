@@ -57,6 +57,7 @@ var pieceMealMixin = {
         loadMore: async function() {
             // If the list is fully loaded, there is nothing to do.
             if (this.end_n >= this.base_list.length) {
+                console.log('List is fully loaded.');
                 return;
             }
 

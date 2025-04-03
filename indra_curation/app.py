@@ -14,7 +14,6 @@ from flask import Flask, request, jsonify, url_for, abort, Response, \
 from jinja2 import Environment, ChoiceLoader
 
 from indra_curation.validation import validate_comment
-from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.html import HtmlAssembler
 from indra.assemblers.html.assembler import loader as indra_loader, \
     _format_stmt_text, _format_evidence_text
