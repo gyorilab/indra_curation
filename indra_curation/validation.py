@@ -7,7 +7,7 @@ __all__ = ['validate_comment']
 # Needs to match 'KEY1:VALUE1;KEY2:VALUE2;...'. Trailing ';' is optional.
 # Let keys be case-sensitive alphabet strings and values be any alphanumeric, dash,
 # space, or underscore characters.
-comment_pattern = re.compile(r'([A-Z]+):("(?:""|[^"])*"|[^;]*)')
+comment_pattern = re.compile(r'([a-zA-Z ]+):("(?:""|[^"])*"|[^;]*)')
 valid_keys = {
     'CELL', 'TAXID', 'DIRECT', 'EFFECT', 'SENTENCE', 'MECHANISM', 'RESIDUE'
 }
@@ -45,24 +45,37 @@ def validate_comment(text: str) -> Tuple[bool, str]:
     # Now test if the keys are valid
     invalid_keys = []
     empty_values = []
+    space_in_keys = []
     has_match = False
     for sub_match in matches_iter:
         key = sub_match.group(1)
         value = sub_match.group(2)
-        if key.upper() not in valid_keys:
-            invalid_keys.append(key)
+        if key not in valid_keys:
+            if key.strip() in valid_keys:
+                space_in_keys.append(key.strip())
+            else:
+                invalid_keys.append(key)
         elif not value:
             # If the value is empty, this is also invalid
             empty_values.append(key)
         else:
             # We have at least one valid match
             has_match |= True
+    if space_in_keys and not invalid_keys:
+        # Handle the case where keys have spaces but are valid otherwise
+        return (
+            False,
+            f"One or more key(s) contain spaces: {', '.join(space_in_keys)}. "
+            f"Please use capital letters without spaces for keys."
+        )
     if invalid_keys:
-        return False, (f"Invalid key(s): '{', '.join(invalid_keys)}'. Must be one of "
-                       f"{valid_str}.")
+        bad_keys = invalid_keys + space_in_keys
+        space_txt = ". Some keys may contain spaces" if space_in_keys else ""
+        return False, \
+            f"Invalid key(s): {', '.join(bad_keys)}{space_txt}. Must be one of {valid_str}."
     if empty_values:
         # Handle empty values
-        return False, f"Empty value for key(s): '{', '.join(empty_values)}'. "
+        return False, f"Empty value for key(s): {', '.join(empty_values)}. "
     if not has_match:
         # If no valid matches were found, return invalid
         return (
