@@ -1,0 +1,2 @@
+include indra_curation/templates/curation_service/*.html
+recursive-include indra_curation/static *
